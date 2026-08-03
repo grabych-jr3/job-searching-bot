@@ -22,6 +22,7 @@ public class BulldogJobController {
     @GetMapping
     public ResponseEntity<List<JobOffer>> getAll(){
         List<JobOffer> offers = jobSearcher.search();
+        System.out.println(offers.size());
         return ResponseEntity.ok(offers);
     }
 }
