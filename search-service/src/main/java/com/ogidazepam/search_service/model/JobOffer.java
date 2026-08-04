@@ -2,6 +2,7 @@ package com.ogidazepam.search_service.model;
 
 import lombok.Builder;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Builder
@@ -19,9 +20,13 @@ public record JobOffer(
 
         String experienceLevel,
         Integer experienceInYears,
-        List<String> technologyTags,
+        List<String> requiredSkills,
+        List<String> niceToHaveSkills,
+        List<String> languages,
 
         String country,
-        List<String> cities
+        List<String> cities,
+
+        OffsetDateTime expiresAt
 ) {
 }

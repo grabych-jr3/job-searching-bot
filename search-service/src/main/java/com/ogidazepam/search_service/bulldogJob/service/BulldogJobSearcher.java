@@ -8,7 +8,6 @@ import com.ogidazepam.search_service.model.JobOffer;
 import com.ogidazepam.search_service.strategy.JobSearcher;
 import org.springframework.stereotype.Service;
 import java.util.List;
-import java.util.Set;
 
 @Service
 public class BulldogJobSearcher implements JobSearcher {
@@ -48,9 +47,10 @@ public class BulldogJobSearcher implements JobSearcher {
                 .workModes(job.workModes())
                 .experienceLevel(job.experienceLevel())
                 .experienceInYears(job.minExperienceInYears())
-                .technologyTags(job.technologyTags())
+                .requiredSkills(job.technologyTags())
                 .country(nextData.props().pageProps().country())
                 .cities(cities)
+                .expiresAt(job.endsAt())
                 .build();
     }
 }
