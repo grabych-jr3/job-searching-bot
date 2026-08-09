@@ -1,0 +1,45 @@
+package com.ogidazepam.search_service.bulldogJob.mapper;
+
+import com.ogidazepam.search_service.bulldogJob.model.BulldogJobMetaData;
+import com.ogidazepam.search_service.bulldogJob.model.BulldogJobNextData;
+import com.ogidazepam.search_service.bulldogJob.model.BulldogJobOffer;
+import com.ogidazepam.search_service.bulldogJob.model.BulldogJobJobLocation;
+import com.ogidazepam.search_service.model.JobOffer;
+import com.ogidazepam.search_service.mapper.JobOfferMapper;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+@Component
+public class BulldogJobMapper implements JobOfferMapper<BulldogJobNextData> {
+
+    @Override
+    public JobOffer mapToJobOffer(BulldogJobNextData nextData) {
+        BulldogJobMetaData metaData = nextData.props().pageProps().metaData();
+        BulldogJobOffer job = nextData.props().pageProps().data().job();
+
+        return JobOffer.builder()
+                .url(metaData.canonicalUrl())
+                .jobTitle(metaData.title())
+                .companyName(job.company().name())
+                .jobDescription(job.details())
+                .requirements(job.requirements())
+                .employmentType(List.of(job.employmentType()))
+                .position(List.of(job.position()))
+                .remote(job.remote())
+                .workModes(job.workModes())
+                .experienceLevel(job.experienceLevel())
+                .experienceInYears(job.minExperienceInYears())
+                .requiredSkills(job.technologyTags())
+                .country(List.of(nextData.props().pageProps().country()))
+                .cities(mapCities(job.locations()))
+                .expiresAt(job.endsAt())
+                .build();
+    }
+
+    private List<String> mapCities(List<BulldogJobJobLocation> jobJobLocations){
+        return jobJobLocations.stream()
+                .map(j -> j.location().cityEn())
+                .toList();
+    }
+}

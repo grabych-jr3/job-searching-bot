@@ -1,5 +1,6 @@
 package com.ogidazepam.search_service.pracujpl.mapper;
 
+import com.ogidazepam.search_service.mapper.JobOfferMapper;
 import com.ogidazepam.search_service.model.JobOffer;
 import com.ogidazepam.search_service.pracujpl.model.offer.*;
 import org.springframework.stereotype.Component;
@@ -8,9 +9,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public class PracujPlOfferMapper {
+public class PracujPlOfferMapper implements JobOfferMapper<PracujPlOfferData> {
 
-    public JobOffer toJobOffer(PracujPlOfferData data){
+    @Override
+    public JobOffer mapToJobOffer(PracujPlOfferData data) {
         PracujPlOfferAttributes attributes = data.attributes();
         PracujPlOfferEmployment employment = data.attributes().employment();
         List<PracujPlOfferTextSection> textSections = data.textSections();

@@ -1,6 +1,7 @@
 package com.ogidazepam.search_service.justjoinit.service;
 
 import com.ogidazepam.search_service.justjoinit.client.JustJoinItClient;
+import com.ogidazepam.search_service.justjoinit.mapper.JustJoinItMapper;
 import com.ogidazepam.search_service.justjoinit.model.*;
 import com.ogidazepam.search_service.model.JobOffer;
 import com.ogidazepam.search_service.strategy.JobSearcher;
@@ -13,9 +14,11 @@ public class JustJoinItJobSearcher implements JobSearcher {
 
     private static final String JOB_URL = "https://justjoin.it/job-offer/";
 
+    private final JustJoinItMapper mapper;
     private final JustJoinItClient justJoinItClient;
 
-    public JustJoinItJobSearcher(JustJoinItClient justJoinItClient) {
+    public JustJoinItJobSearcher(JustJoinItMapper mapper, JustJoinItClient justJoinItClient) {
+        this.mapper = mapper;
         this.justJoinItClient = justJoinItClient;
     }
 
@@ -26,47 +29,11 @@ public class JustJoinItJobSearcher implements JobSearcher {
                     JustJoinItJobDetails jobDetails = justJoinItClient
                             .fetchJobOffersDetails(offer.getSlug());
 
-                    return toJobOffer(offer, jobDetails);
+                    return mapper.mapToJobOffer(new JustJoinItJobData(
+                            offer,
+                            jobDetails
+                    ));
                 })
                 .toList();
-    }
-
-    private JobOffer toJobOffer(JustJoinItJobOffer jobOffer, JustJoinItJobDetails jobDetails){
-
-        List<String> requiredSkills = jobOffer.getRequiredSkills()
-                .stream()
-                .map(JustJoinItJobRequiredSkill::name)
-                .toList();
-
-        List<String> niceToHaveSkills = jobOffer.getNiceToHaveSkills()
-                .stream()
-                .map(JustJoinItJobNiceToHaveSkill::name)
-                .toList();
-
-        List<String> languages = jobOffer.getLanguages()
-                .stream()
-                .map(JustJoinItJobLanguages::code)
-                .toList();
-
-        List<String> cities = jobOffer.getLocations()
-                .stream()
-                .map(JustJoinItJobLocation::city)
-                .toList();
-
-        return JobOffer.builder()
-                .url(JOB_URL + jobOffer.getSlug())
-                .jobTitle(jobOffer.getTitle())
-                .companyName(jobOffer.getCompanyName())
-                .jobDescription(jobDetails.body())
-                .employmentType(List.of(jobOffer.getWorkingTime()))
-                .remote(jobOffer.getWorkplaceType().equals("remote"))
-                .workModes(List.of(jobOffer.getWorkplaceType()))
-                .experienceLevel(jobOffer.getExperienceLevel())
-                .requiredSkills(requiredSkills)
-                .niceToHaveSkills(niceToHaveSkills)
-                .languages(languages)
-                .cities(cities)
-                .expiresAt(jobOffer.getExpiredAt())
-                .build();
     }
 }

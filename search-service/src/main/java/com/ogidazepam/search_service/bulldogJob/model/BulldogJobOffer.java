@@ -15,6 +15,6 @@ public record BulldogJobOffer(
         List<String> technologyTags,
         List<String> workModes,
         BulldogJobCompany company,
-        List<JobLocation> locations
+        List<BulldogJobJobLocation> locations
 ) {
 }

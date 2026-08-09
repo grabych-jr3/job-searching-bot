@@ -1,9 +1,8 @@
 package com.ogidazepam.search_service.bulldogJob.service;
 
 import com.ogidazepam.search_service.bulldogJob.client.BulldogJobClient;
-import com.ogidazepam.search_service.bulldogJob.model.BulldogJobMetaData;
+import com.ogidazepam.search_service.bulldogJob.mapper.BulldogJobMapper;
 import com.ogidazepam.search_service.bulldogJob.model.BulldogJobNextData;
-import com.ogidazepam.search_service.bulldogJob.model.BulldogJobOffer;
 import com.ogidazepam.search_service.model.JobOffer;
 import com.ogidazepam.search_service.strategy.JobSearcher;
 import org.springframework.stereotype.Service;
@@ -12,9 +11,11 @@ import java.util.List;
 @Service
 public class BulldogJobSearcher implements JobSearcher {
 
+    private final BulldogJobMapper jobMapper;
     private final BulldogJobClient bulldogJobClient;
 
-    public BulldogJobSearcher(BulldogJobClient bulldogJobClient) {
+    public BulldogJobSearcher(BulldogJobMapper jobMapper, BulldogJobClient bulldogJobClient) {
+        this.jobMapper = jobMapper;
         this.bulldogJobClient = bulldogJobClient;
     }
 
@@ -23,34 +24,7 @@ public class BulldogJobSearcher implements JobSearcher {
         List<BulldogJobNextData> jobOffers = bulldogJobClient.fetchJobOffers();
 
         return jobOffers.stream()
-                .map(this::mapToJobOffer)
+                .map(jobMapper::mapToJobOffer)
                 .toList();
-    }
-
-    private JobOffer mapToJobOffer(BulldogJobNextData nextData){
-        BulldogJobMetaData metaData = nextData.props().pageProps().metaData();
-        BulldogJobOffer job = nextData.props().pageProps().data().job();
-
-        List<String> cities = job.locations().stream()
-                .map(j -> j.location().cityEn())
-                .toList();
-
-        return JobOffer.builder()
-                .url(metaData.canonicalUrl())
-                .jobTitle(metaData.title())
-                .companyName(job.company().name())
-                .jobDescription(job.details())
-                .requirements(job.requirements())
-                .employmentType(List.of(job.employmentType()))
-                .position(List.of(job.position()))
-                .remote(job.remote())
-                .workModes(job.workModes())
-                .experienceLevel(job.experienceLevel())
-                .experienceInYears(job.minExperienceInYears())
-                .requiredSkills(job.technologyTags())
-                .country(List.of(nextData.props().pageProps().country()))
-                .cities(cities)
-                .expiresAt(job.endsAt())
-                .build();
     }
 }
