@@ -13,8 +13,8 @@ public record JobOffer(
         String companyName,
         String jobDescription,
         String requirements,
-        String employmentType,
-        String position,
+        List<String> employmentType,
+        List<String> position,
         Boolean remote,
         List<String> workModes,
 
@@ -24,7 +24,7 @@ public record JobOffer(
         List<String> niceToHaveSkills,
         List<String> languages,
 
-        String country,
+        List<String> country,
         List<String> cities,
 
         OffsetDateTime expiresAt

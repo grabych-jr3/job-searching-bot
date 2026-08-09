@@ -58,7 +58,7 @@ public class JustJoinItJobSearcher implements JobSearcher {
                 .jobTitle(jobOffer.getTitle())
                 .companyName(jobOffer.getCompanyName())
                 .jobDescription(jobDetails.body())
-                .employmentType(jobOffer.getWorkingTime())
+                .employmentType(List.of(jobOffer.getWorkingTime()))
                 .remote(jobOffer.getWorkplaceType().equals("remote"))
                 .workModes(List.of(jobOffer.getWorkplaceType()))
                 .experienceLevel(jobOffer.getExperienceLevel())
