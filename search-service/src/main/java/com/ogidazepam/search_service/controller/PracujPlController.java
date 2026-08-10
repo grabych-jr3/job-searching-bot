@@ -1,7 +1,9 @@
 package com.ogidazepam.search_service.controller;
 
 import com.ogidazepam.search_service.model.JobOffer;
-import com.ogidazepam.search_service.pracujpl.service.PracujPlJobSearcher;
+import com.ogidazepam.search_service.strategy.JobSearcher;
+import com.ogidazepam.search_service.websites.pracujpl.service.PracujPlJobSearcher;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,9 +15,9 @@ import java.util.List;
 @RequestMapping("/pracujpl")
 public class PracujPlController {
 
-    private final PracujPlJobSearcher jobSearcher;
+    private final JobSearcher jobSearcher;
 
-    public PracujPlController(PracujPlJobSearcher jobSearcher) {
+    public PracujPlController(@Qualifier("pracujPlJobSearcher") JobSearcher jobSearcher) {
         this.jobSearcher = jobSearcher;
     }
 
