@@ -1,6 +1,7 @@
 package com.ogidazepam.search_service.controller;
 
-import com.ogidazepam.search_service.justjoinit.service.JustJoinItJobSearcher;
+import com.ogidazepam.search_service.strategy.JobSearcher;
+import com.ogidazepam.search_service.websites.justjoinit.service.JustJoinItJobSearcher;
 import com.ogidazepam.search_service.model.JobOffer;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
@@ -14,14 +15,14 @@ import java.util.List;
 @RequestMapping("/justjoinit")
 public class JustJoinItController {
 
-    private final JustJoinItJobSearcher justJoinItJobSearcher;
+    private final JobSearcher jobSearcher;
 
-    public JustJoinItController(@Qualifier("justJoinItJobSearcher") JustJoinItJobSearcher justJoinItJobSearcher) {
-        this.justJoinItJobSearcher = justJoinItJobSearcher;
+    public JustJoinItController(@Qualifier("justJoinItJobSearcher") JobSearcher jobSearcher) {
+        this.jobSearcher = jobSearcher;
     }
 
     @GetMapping
     public ResponseEntity<List<JobOffer>> getAll(){
-        return ResponseEntity.ok(justJoinItJobSearcher.search());
+        return ResponseEntity.ok(jobSearcher.search());
     }
 }
