@@ -19,6 +19,8 @@ public class BulldogJobMapper implements JobOfferMapper<BulldogJobNextData> {
         BulldogJobOffer job = nextData.props().pageProps().data().job();
 
         return JobOffer.builder()
+                .source("BulldogJob")
+                .id(nextData.id())
                 .url(metaData.canonicalUrl())
                 .jobTitle(metaData.title())
                 .companyName(job.company().name())

@@ -19,6 +19,8 @@ public class PracujPlOfferMapper implements JobOfferMapper<PracujPlOfferData> {
         List<PracujPlOfferTextSection> textSections = data.textSections();
 
         return JobOffer.builder()
+                .source("PracujPl")
+                .id(data.attributes().offerAbsoluteUrl())
                 .url(attributes.offerAbsoluteUrl())
                 .jobTitle(attributes.jobTitle())
                 .companyName(attributes.displayEmployerName())
