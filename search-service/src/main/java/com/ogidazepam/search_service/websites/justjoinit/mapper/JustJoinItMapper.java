@@ -18,6 +18,8 @@ public class JustJoinItMapper implements JobOfferMapper<JustJoinItJobData> {
         JustJoinItJobDetails jobDetails = job.jobDetails();
 
         return JobOffer.builder()
+                .source("JustJoinIt")
+                .id(jobOffer.getSlug())
                 .url(JOB_URL + jobOffer.getSlug())
                 .jobTitle(jobOffer.getTitle())
                 .companyName(jobOffer.getCompanyName())
