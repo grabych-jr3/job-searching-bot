@@ -7,6 +7,9 @@ import java.util.List;
 
 @Builder
 public record JobOffer(
+        String source,
+        String id,
+
         String url,
         String jobTitle,
 

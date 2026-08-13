@@ -12,7 +12,7 @@ public record CandidateProfile(
         List<String> skills,
         List<CandidateProject> projects,
         List<CandidateEducation> education,
-        List<Certificate> certificates,
+        List<CandidateCertificate> certificates,
         List<CandidateLanguage> languages
 ) {
 }

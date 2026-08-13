@@ -9,7 +9,7 @@ public record CandidateEducation(
         String universityName,
         String major,
         String degree,
-        YearMonth started,
-        YearMonth finishedOrExpected
+        String started,
+        String finishedOrExpected
 ) {
 }

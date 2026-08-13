@@ -18,7 +18,7 @@ import java.util.List;
 @Component
 public class BulldogJobClient {
 
-    private static final String JOBS_URL = "https://bulldogjob.pl/companies/jobs/s/skills,Java";
+    private static final String JOBS_URL = "https://bulldogjob.pl/companies/jobs/s/skills,Java/experienceLevel,intern,junior";
     private static final String JOB_URL = "https://bulldogjob.pl/companies/jobs/";
     private static final String SOURCE = "BulldogJob";
 
