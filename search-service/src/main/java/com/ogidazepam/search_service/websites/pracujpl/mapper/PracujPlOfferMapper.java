@@ -3,7 +3,6 @@ package com.ogidazepam.search_service.websites.pracujpl.mapper;
 import com.ogidazepam.search_service.mapper.JobOfferMapper;
 import com.ogidazepam.search_service.model.JobOffer;
 import com.ogidazepam.search_service.websites.pracujpl.model.offer.*;
-import com.ogidazepam.search_service.websites.pracujpl.model.offer.*;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -27,14 +26,11 @@ public class PracujPlOfferMapper implements JobOfferMapper<PracujPlOfferData> {
                 .jobDescription(mapJobDescription(textSections))
                 .requirements(mapJobRequirements(textSections))
                 .employmentType(mapJobEmploymentTypes(employment.workSchedules()))
-                .position(mapJobPositions(employment.positionLevels()))
-                .remote(employment.entirelyRemoteWork())
                 .workModes(mapJobWorkModes(employment.workModes()))
+                .experienceLevel(mapExperienceLevel(employment.positionLevels()))
                 .requiredSkills(mapJobRequiredSkills(textSections))
                 .niceToHaveSkills(mapJobOptionalSkills(textSections))
-                .country(mapJobCountries(attributes.workplaces()))
                 .cities(mapJobCities(attributes.workplaces()))
-                .expiresAt(data.publicationDetails().expirationDateTimeUtc())
                 .build();
     }
 
@@ -80,7 +76,7 @@ public class PracujPlOfferMapper implements JobOfferMapper<PracujPlOfferData> {
                 .toList();
     }
 
-    private List<String> mapJobPositions(List<PracujPlOfferPositionLevel> positionLevels){
+    private List<String> mapExperienceLevel(List<PracujPlOfferPositionLevel> positionLevels){
         return positionLevels.stream()
                 .map(PracujPlOfferPositionLevel::name)
                 .toList();
@@ -89,12 +85,6 @@ public class PracujPlOfferMapper implements JobOfferMapper<PracujPlOfferData> {
     private List<String> mapJobCities(List<PracujPlOfferWorkplace> workplaces){
         return workplaces.stream()
                 .map(w -> w.inlandLocation().location().name())
-                .toList();
-    }
-
-    private List<String> mapJobCountries(List<PracujPlOfferWorkplace> workplaces){
-        return workplaces.stream()
-                .map(w -> w.country().name())
                 .toList();
     }
 }

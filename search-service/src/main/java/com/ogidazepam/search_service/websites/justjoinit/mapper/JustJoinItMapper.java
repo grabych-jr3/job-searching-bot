@@ -19,20 +19,17 @@ public class JustJoinItMapper implements JobOfferMapper<JustJoinItJobData> {
 
         return JobOffer.builder()
                 .source("JustJoinIt")
-                .id(jobOffer.getSlug())
-                .url(JOB_URL + jobOffer.getSlug())
-                .jobTitle(jobOffer.getTitle())
-                .companyName(jobOffer.getCompanyName())
+                .id(jobOffer.slug())
+                .url(JOB_URL + jobOffer.slug())
+                .jobTitle(jobOffer.title())
+                .companyName(jobOffer.companyName())
                 .jobDescription(jobDetails.body())
-                .employmentType(List.of(jobOffer.getWorkingTime()))
-                .remote(jobOffer.getWorkplaceType().equals("remote"))
-                .workModes(List.of(jobOffer.getWorkplaceType()))
-                .experienceLevel(jobOffer.getExperienceLevel())
-                .requiredSkills(mapRequiredSkills(jobOffer.getRequiredSkills()))
-                .niceToHaveSkills(mapNiceToHaveSkills(jobOffer.getNiceToHaveSkills()))
-                .languages(mapLanguages(jobOffer.getLanguages()))
-                .cities(mapCities(jobOffer.getLocations()))
-                .expiresAt(jobOffer.getExpiredAt())
+                .employmentType(List.of(jobOffer.workingTime()))
+                .workModes(List.of(jobOffer.workplaceType()))
+                .experienceLevel(List.of(jobOffer.experienceLevel()))
+                .requiredSkills(mapRequiredSkills(jobOffer.requiredSkills()))
+                .niceToHaveSkills(mapNiceToHaveSkills(jobOffer.niceToHaveSkills()))
+                .cities(mapCities(jobOffer.locations()))
                 .build();
     }
 
@@ -47,13 +44,6 @@ public class JustJoinItMapper implements JobOfferMapper<JustJoinItJobData> {
         return niceToHaveSkills
                 .stream()
                 .map(JustJoinItJobNiceToHaveSkill::name)
-                .toList();
-    }
-
-    private List<String> mapLanguages(List<JustJoinItJobLanguages> languages){
-        return languages
-                .stream()
-                .map(JustJoinItJobLanguages::code)
                 .toList();
     }
 

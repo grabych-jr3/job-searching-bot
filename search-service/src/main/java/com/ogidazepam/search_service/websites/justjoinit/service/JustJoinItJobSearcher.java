@@ -32,12 +32,12 @@ public class JustJoinItJobSearcher implements JobSearcher {
     public List<JobOffer> search() {
         return justJoinItClient.fetchJobOffers().stream()
                 .filter(offer -> {
-                    String key = "processed_offer:" + SOURCE + ":" + offer.getSlug();
+                    String key = "processed_offer:" + SOURCE + ":" + offer.slug();
                     return !Boolean.TRUE.equals(redisTemplate.hasKey(key));
                 })
                 .map(offer -> {
                     JustJoinItJobDetails jobDetails = justJoinItClient
-                            .fetchJobOffersDetails(offer.getSlug());
+                            .fetchJobOffersDetails(offer.slug());
 
                     return mapper.mapToJobOffer(new JustJoinItJobData(
                             offer,

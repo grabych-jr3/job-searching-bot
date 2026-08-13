@@ -17,19 +17,12 @@ public record JobOffer(
         String jobDescription,
         String requirements,
         List<String> employmentType,
-        List<String> position,
-        Boolean remote,
         List<String> workModes,
 
-        String experienceLevel,
-        Integer experienceInYears,
+        List<String> experienceLevel,
         List<String> requiredSkills,
         List<String> niceToHaveSkills,
-        List<String> languages,
 
-        List<String> country,
-        List<String> cities,
-
-        OffsetDateTime expiresAt
+        List<String> cities
 ) {
 }

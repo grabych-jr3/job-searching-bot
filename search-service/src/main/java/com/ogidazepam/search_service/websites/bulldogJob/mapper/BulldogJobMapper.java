@@ -27,15 +27,10 @@ public class BulldogJobMapper implements JobOfferMapper<BulldogJobNextData> {
                 .jobDescription(job.details())
                 .requirements(job.requirements())
                 .employmentType(List.of(job.employmentType()))
-                .position(List.of(job.position()))
-                .remote(job.remote())
                 .workModes(job.workModes())
-                .experienceLevel(job.experienceLevel())
-                .experienceInYears(job.minExperienceInYears())
+                .experienceLevel(List.of(job.experienceLevel()))
                 .requiredSkills(job.technologyTags())
-                .country(List.of(nextData.props().pageProps().country()))
                 .cities(mapCities(job.locations()))
-                .expiresAt(job.endsAt())
                 .build();
     }
 
