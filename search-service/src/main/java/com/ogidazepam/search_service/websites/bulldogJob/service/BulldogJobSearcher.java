@@ -20,11 +20,11 @@ public class BulldogJobSearcher implements JobSearcher {
     }
 
     @Override
-    public List<JobOffer> search() {
+    public List<JobOffer> search(String taskId) {
         List<BulldogJobNextData> jobOffers = bulldogJobClient.fetchJobOffers();
 
         return jobOffers.stream()
-                .map(jobMapper::mapToJobOffer)
+                .map(offer -> jobMapper.mapToJobOffer(offer, taskId))
                 .toList();
     }
 }

@@ -29,7 +29,7 @@ public class JustJoinItJobSearcher implements JobSearcher {
     }
 
     @Override
-    public List<JobOffer> search() {
+    public List<JobOffer> search(String taskId) {
         return justJoinItClient.fetchJobOffers().stream()
                 .filter(offer -> {
                     String key = "processed_offer:" + SOURCE + ":" + offer.slug();
@@ -42,7 +42,8 @@ public class JustJoinItJobSearcher implements JobSearcher {
                     return mapper.mapToJobOffer(new JustJoinItJobData(
                             offer,
                             jobDetails
-                    ));
+                    ),
+                            taskId);
                 })
                 .toList();
     }

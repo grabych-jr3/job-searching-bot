@@ -12,12 +12,13 @@ import java.util.stream.Collectors;
 public class PracujPlOfferMapper implements JobOfferMapper<PracujPlOfferData> {
 
     @Override
-    public JobOffer mapToJobOffer(PracujPlOfferData data) {
+    public JobOffer mapToJobOffer(PracujPlOfferData data, String taskId) {
         PracujPlOfferAttributes attributes = data.attributes();
         PracujPlOfferEmployment employment = data.attributes().employment();
         List<PracujPlOfferTextSection> textSections = data.textSections();
 
         return JobOffer.builder()
+                .taskId(taskId)
                 .source("PracujPl")
                 .id(data.attributes().offerAbsoluteUrl())
                 .url(attributes.offerAbsoluteUrl())

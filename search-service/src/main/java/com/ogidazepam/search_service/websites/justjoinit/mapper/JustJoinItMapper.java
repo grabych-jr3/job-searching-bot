@@ -13,11 +13,12 @@ public class JustJoinItMapper implements JobOfferMapper<JustJoinItJobData> {
     private static final String JOB_URL = "https://justjoin.it/job-offer/";
 
     @Override
-    public JobOffer mapToJobOffer(JustJoinItJobData job) {
+    public JobOffer mapToJobOffer(JustJoinItJobData job, String taskId) {
         JustJoinItJobOffer jobOffer = job.jobOffer();
         JustJoinItJobDetails jobDetails = job.jobDetails();
 
         return JobOffer.builder()
+                .taskId(taskId)
                 .source("JustJoinIt")
                 .id(jobOffer.slug())
                 .url(JOB_URL + jobOffer.slug())

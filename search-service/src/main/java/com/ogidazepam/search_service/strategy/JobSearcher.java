@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface JobSearcher {
 
-    List<JobOffer> search();
+    List<JobOffer> search(String task_id);
 }

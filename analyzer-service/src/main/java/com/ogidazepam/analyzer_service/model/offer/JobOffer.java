@@ -7,6 +7,8 @@ import java.util.List;
 
 @Builder
 public record JobOffer(
+        String taskId,
+
         String source,
         String id,
 

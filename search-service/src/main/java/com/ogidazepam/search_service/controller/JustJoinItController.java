@@ -23,6 +23,6 @@ public class JustJoinItController {
 
     @GetMapping
     public ResponseEntity<List<JobOffer>> getAll(){
-        return ResponseEntity.ok(jobSearcher.search());
+        return ResponseEntity.ok(jobSearcher.search("task"));
     }
 }

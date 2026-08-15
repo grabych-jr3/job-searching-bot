@@ -2,6 +2,7 @@ package com.ogidazepam.analyzer_service.service;
 
 import com.ogidazepam.analyzer_service.model.OfferResult;
 import com.ogidazepam.analyzer_service.model.candidate.CandidateProfile;
+import com.ogidazepam.analyzer_service.model.event.AnalyzedOfferEvent;
 import com.ogidazepam.analyzer_service.model.offer.JobOffer;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.core.ParameterizedTypeReference;
@@ -14,14 +15,16 @@ public class AiAnalyzerService {
 
     private final ChatClient chatClient;
     private final AICandidateParser aiCandidateParser;
+    private final KafkaProducerService<AnalyzedOfferEvent> kafkaProducerService;
 
-    public AiAnalyzerService(ChatClient.Builder chatClient, AICandidateParser aiCandidateParser) {
+    public AiAnalyzerService(ChatClient.Builder chatClient, AICandidateParser aiCandidateParser, KafkaProducerService<AnalyzedOfferEvent> kafkaProducerService) {
         this.chatClient = chatClient.build();
         this.aiCandidateParser = aiCandidateParser;
+        this.kafkaProducerService = kafkaProducerService;
     }
 
-    public void analyze(List<JobOffer> offers){
-        CandidateProfile candidateProfile = aiCandidateParser.createCandidateProfile();
+    public void analyze(String taskId, List<JobOffer> offers){
+        CandidateProfile candidateProfile = aiCandidateParser.getOrCreateCandidateProfile(taskId);
 
         List<OfferResult> offerResults = chatClient.prompt()
                 .system(s -> s.text(
@@ -41,14 +44,8 @@ public class AiAnalyzerService {
                 .call()
                 .entity(new ParameterizedTypeReference<List<OfferResult>>(){});
 
-        listOfferResults(offerResults);
-    }
-
-    private void listOfferResults(List<OfferResult> offerResults){
-        System.out.println("-----------------------");
-        for (OfferResult result : offerResults){
-            System.out.println(result);
+        if (offerResults != null){
+            offerResults.forEach(offer -> kafkaProducerService.sendToKafka("completed-offer-topic", AnalyzedOfferEvent.offerResult(taskId, offer)));
         }
-        System.out.println("-----------------------");
     }
 }

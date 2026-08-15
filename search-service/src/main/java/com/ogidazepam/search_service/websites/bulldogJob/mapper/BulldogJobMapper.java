@@ -14,11 +14,12 @@ import java.util.List;
 public class BulldogJobMapper implements JobOfferMapper<BulldogJobNextData> {
 
     @Override
-    public JobOffer mapToJobOffer(BulldogJobNextData nextData) {
+    public JobOffer mapToJobOffer(BulldogJobNextData nextData, String taskId) {
         BulldogJobMetaData metaData = nextData.props().pageProps().metaData();
         BulldogJobOffer job = nextData.props().pageProps().data().job();
 
         return JobOffer.builder()
+                .taskId(taskId)
                 .source("BulldogJob")
                 .id(nextData.id())
                 .url(metaData.canonicalUrl())

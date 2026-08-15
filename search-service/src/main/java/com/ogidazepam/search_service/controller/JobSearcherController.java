@@ -21,7 +21,7 @@ public class JobSearcherController {
 
     @GetMapping
     public ResponseEntity<List<JobOffer>> searchAll(){
-        List<JobOffer> offers = jobSearchService.searchAll();
+        List<JobOffer> offers = jobSearchService.searchAll("taskId");
         return ResponseEntity.ok(offers);
     }
 }

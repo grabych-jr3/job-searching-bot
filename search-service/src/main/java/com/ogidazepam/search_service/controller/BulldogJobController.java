@@ -22,7 +22,7 @@ public class BulldogJobController {
 
     @GetMapping
     public ResponseEntity<List<JobOffer>> getAll(){
-        List<JobOffer> offers = jobSearcher.search();
+        List<JobOffer> offers = jobSearcher.search("task");
         return ResponseEntity.ok(offers);
     }
 }

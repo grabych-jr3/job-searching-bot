@@ -21,9 +21,9 @@ public class PracujPlJobSearcher implements JobSearcher{
     }
 
     @Override
-    public List<JobOffer> search() {
+    public List<JobOffer> search(String taskId) {
         return pracujPlClient.fetchOffers().stream()
-                .map(offerMapper::mapToJobOffer)
+                .map(offer -> offerMapper.mapToJobOffer(offer, taskId))
                 .toList();
     }
 }

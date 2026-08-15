@@ -22,6 +22,6 @@ public class ResumeController {
 
     @GetMapping
     public ResponseEntity<CandidateProfile> extractText(){
-        return ResponseEntity.ok(aiCandidateParser.createCandidateProfile());
+        return ResponseEntity.ok(aiCandidateParser.getOrCreateCandidateProfile("task"));
     }
 }

@@ -1,6 +1,5 @@
-package com.ogidazepam.search_service.service;
+package com.ogidazepam.analyzer_service.service;
 
-import com.ogidazepam.search_service.model.JobOffer;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -13,10 +12,7 @@ public class KafkaProducerService<T> {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void sendToKafka(String topic, T offerEvent){
-        kafkaTemplate.send(
-                topic,
-                offerEvent
-        );
+    public void sendToKafka(String topic, T event){
+        kafkaTemplate.send(topic, event);
     }
 }
