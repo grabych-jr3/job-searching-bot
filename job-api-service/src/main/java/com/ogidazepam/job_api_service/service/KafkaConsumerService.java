@@ -7,11 +7,20 @@ import org.springframework.stereotype.Service;
 @Service
 public class KafkaConsumerService {
 
+    private final SSENotificationService sseNotificationService;
+
+    public KafkaConsumerService(SSENotificationService sseNotificationService) {
+        this.sseNotificationService = sseNotificationService;
+    }
+
     @KafkaListener(topics = "completed-offer-topic")
     public void consumeCompletedOffers(AnalyzedOfferEvent event){
-        System.out.println(event.offerResult());
-        if (event.type() == AnalyzedOfferEvent.EventType.ANALYSIS_FINISHED){
-            System.out.println("ANALYSIS FINISHED");
+        String taskId = event.taskId();
+
+        if (event.type() == AnalyzedOfferEvent.EventType.OFFER){
+            sseNotificationService.sendOffer(taskId, event.offerResult());
+        }else {
+            sseNotificationService.sendCompletion(taskId);
         }
     }
 }

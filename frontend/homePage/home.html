@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Analyzer</title>
+    <link rel="stylesheet" href="home.css">
+</head>
+<body>
+    <main class="page-shell">
+        <section class="upload-card">
+            <h1>Upload file for analysis</h1>
+
+            <form id="uploadForm" class="upload-form">
+                <label class="file-picker" for="fileInput">
+                    <span class="file-picker-label">Choose file</span>
+                    <input id="fileInput" type="file" name="file" required>
+                </label>
+
+                <button type="submit" id="submitBtn">Send</button>
+            </form>
+
+            <div id="status" class="status" aria-live="polite">No file selected.</div>
+        </section>
+
+        <section class="results-panel" aria-live="polite">
+            <div class="results-controls">
+                <div class="filter-group" aria-label="Filter offers by score range">
+                    <button class="filter-btn active" data-filter="all" type="button">All</button>
+                    <button class="filter-btn" data-filter="0-49" type="button">0-49</button>
+                    <button class="filter-btn" data-filter="50-69" type="button">50-69</button>
+                    <button class="filter-btn" data-filter="70-79" type="button">70-79</button>
+                    <button class="filter-btn" data-filter="80-100" type="button">80-100</button>
+                </div>
+                <button id="sortBtn" class="sort-btn" type="button">Sort by score</button>
+            </div>
+            <div id="resultsContainer" class="results-container">
+                <div class="empty-state">No job offers analyzed yet.</div>
+            </div>
+        </section>
+    </main>
+
+    <script src="home.js"></script>
+</body>
+</html>
