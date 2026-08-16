@@ -24,7 +24,7 @@ public class AiAnalyzerService {
     }
 
     public void analyze(String taskId, List<JobOffer> offers){
-        CandidateProfile candidateProfile = aiCandidateParser.getOrCreateCandidateProfile(taskId);
+        CandidateProfile candidateProfile = aiCandidateParser.createCandidateProfile(taskId);
 
         List<OfferResult> offerResults = chatClient.prompt()
                 .system(s -> s.text(

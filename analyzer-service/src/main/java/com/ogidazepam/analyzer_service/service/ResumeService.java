@@ -12,11 +12,9 @@ import java.io.InputStream;
 @Service
 public class ResumeService {
 
-    public String extractTextFromPdf(){
-        ClassPathResource resource = new ClassPathResource("cv/Vladyslav Hrabovskyi EN.pdf");
+    public String extractTextFromPdf(byte[] cv){
 
-        try(InputStream inputStream = resource.getInputStream();
-            PDDocument document = Loader.loadPDF(inputStream.readAllBytes())){
+        try(PDDocument document = Loader.loadPDF(cv)){
 
             PDFTextStripper stripper = new PDFTextStripper();
 

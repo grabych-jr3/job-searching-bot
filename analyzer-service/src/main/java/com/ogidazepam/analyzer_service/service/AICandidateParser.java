@@ -12,25 +12,25 @@ public class AICandidateParser {
 
     private final ChatClient chatClient;
     private final ResumeService resumeService;
-    private final RedisTemplate<String, CandidateProfile> redisTemplate;
+    private final RedisTemplate<String, byte[]> redisTemplate;
 
-    public AICandidateParser(ChatClient.Builder chatClient, ResumeService resumeService, RedisTemplate<String, CandidateProfile> redisTemplate) {
+    public AICandidateParser(ChatClient.Builder chatClient, ResumeService resumeService, RedisTemplate<String, byte[]> redisTemplate) {
         this.chatClient = chatClient.build();
         this.resumeService = resumeService;
         this.redisTemplate = redisTemplate;
     }
 
-    public CandidateProfile getOrCreateCandidateProfile(String taskId){
-        String cacheKey = "cv_profile:" + taskId;
+    public CandidateProfile createCandidateProfile(String taskId){
+        String cacheKey = "cv:" + taskId;
 
-        CandidateProfile cachedProfile = redisTemplate.opsForValue().get(cacheKey);
-        if (cachedProfile != null){
-            return cachedProfile;
+        byte[] cachedProfile = redisTemplate.opsForValue().get(cacheKey);
+        if (cachedProfile == null){
+            throw new RuntimeException("File not found");
         }
 
-        String pdfText = resumeService.extractTextFromPdf();
+        String pdfText = resumeService.extractTextFromPdf(cachedProfile);
 
-        CandidateProfile candidateProfile = chatClient
+        return chatClient
                 .prompt()
                 .user(u -> u.text(
                         """
@@ -40,11 +40,5 @@ public class AICandidateParser {
                 ).param("cv", pdfText))
                 .call()
                 .entity(CandidateProfile.class);
-
-        if (candidateProfile != null){
-            redisTemplate.opsForValue().set(cacheKey, candidateProfile, Duration.ofHours(1));
-        }
-
-        return candidateProfile;
     }
 }

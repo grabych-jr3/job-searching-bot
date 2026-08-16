@@ -3,6 +3,7 @@ package com.ogidazepam.analyzer_service.service;
 import com.ogidazepam.analyzer_service.model.event.AnalyzedOfferEvent;
 import com.ogidazepam.analyzer_service.model.event.JobOfferEvent;
 import com.ogidazepam.analyzer_service.model.offer.JobOffer;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -18,18 +19,17 @@ public class KafkaConsumerListener {
     private final Map<String, List<JobOffer>> buffers = new ConcurrentHashMap<>();
 
     private final AiAnalyzerService analyzerService;
+    private final RedisTemplate<String, byte[]> redisTemplate;
     private final KafkaProducerService<AnalyzedOfferEvent> kafkaProducerService;
 
-    public KafkaConsumerListener(AiAnalyzerService analyzerService, KafkaProducerService<AnalyzedOfferEvent> kafkaProducerService) {
+    public KafkaConsumerListener(AiAnalyzerService analyzerService, RedisTemplate<String, byte[]> redisTemplate, KafkaProducerService<AnalyzedOfferEvent> kafkaProducerService) {
         this.analyzerService = analyzerService;
+        this.redisTemplate = redisTemplate;
         this.kafkaProducerService = kafkaProducerService;
     }
 
     @KafkaListener(topics = "found-offers-topic")
     public void consume(JobOfferEvent event){
-        if (event.type() == JobOfferEvent.EventType.SEARCH_FINISHED){
-            System.out.println("SEARCH FINISHED EVENT");
-        }
         String taskId = event.taskId();
 
         if(event.type() == JobOfferEvent.EventType.OFFER){
@@ -43,6 +43,7 @@ public class KafkaConsumerListener {
             flushBuffer(taskId);
             buffers.remove(taskId);
             kafkaProducerService.sendToKafka("completed-offer-topic", AnalyzedOfferEvent.finished(taskId));
+            redisTemplate.delete("cv:" + taskId);
         }
     }
 

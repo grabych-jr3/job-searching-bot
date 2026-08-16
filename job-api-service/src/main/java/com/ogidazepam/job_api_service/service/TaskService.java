@@ -8,11 +8,8 @@ import java.util.UUID;
 @Service
 public class TaskService {
 
-    private static final String STATUS = "Created";
-
     public CreatedTaskEvent createTaskEvent(){
         return CreatedTaskEvent.builder()
-                .status(STATUS)
                 .taskId(generateTaskId())
                 .build();
     }

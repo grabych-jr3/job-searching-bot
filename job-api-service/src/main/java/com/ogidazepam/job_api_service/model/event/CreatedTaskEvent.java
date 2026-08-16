@@ -4,7 +4,6 @@ import lombok.Builder;
 
 @Builder
 public record CreatedTaskEvent(
-        String status,
         String taskId
 ) {
 }
