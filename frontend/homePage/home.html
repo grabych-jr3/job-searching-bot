@@ -12,6 +12,38 @@
             <h1>Upload file for analysis</h1>
 
             <form id="uploadForm" class="upload-form">
+                <fieldset class="filter-fieldset">
+                    <legend>Technology <span class="required-mark">*</span></legend>
+                    <div class="option-list option-list-radio">
+                        <label class="option-item"><input type="radio" name="technology" value="java" required>Java</label>
+                        <label class="option-item"><input type="radio" name="technology" value="javascript">JavaScript</label>
+                        <label class="option-item"><input type="radio" name="technology" value="python">Python</label>
+                        <label class="option-item"><input type="radio" name="technology" value="c">C</label>
+                        <label class="option-item"><input type="radio" name="technology" value="net">.NET</label>
+                        <label class="option-item"><input type="radio" name="technology" value="go">Go</label>
+                        <label class="option-item"><input type="radio" name="technology" value="php">PHP</label>
+                    </div>
+                </fieldset>
+
+                <fieldset class="filter-fieldset">
+                    <legend>Experience level <span class="required-mark">*</span></legend>
+                    <div class="option-list">
+                        <label class="option-item"><input type="checkbox" name="experience" value="intern">Intern</label>
+                        <label class="option-item"><input type="checkbox" name="experience" value="junior">Junior</label>
+                        <label class="option-item"><input type="checkbox" name="experience" value="mid">Mid</label>
+                        <label class="option-item"><input type="checkbox" name="experience" value="senior">Senior</label>
+                    </div>
+                </fieldset>
+
+                <fieldset class="filter-fieldset">
+                    <legend>Work modes</legend>
+                    <div class="option-list">
+                        <label class="option-item"><input type="checkbox" name="workMode" value="full-office">Full-office</label>
+                        <label class="option-item"><input type="checkbox" name="workMode" value="hybrid">Hybrid</label>
+                        <label class="option-item"><input type="checkbox" name="workMode" value="remote">Remote</label>
+                    </div>
+                </fieldset>
+
                 <label class="file-picker" for="fileInput">
                     <span class="file-picker-label">Choose file</span>
                     <input id="fileInput" type="file" name="file" required>

@@ -1,10 +1,11 @@
 package com.ogidazepam.search_service.model.event;
 
+import com.ogidazepam.search_service.model.request.AnalyzeRequest;
 import lombok.Builder;
 
 @Builder
 public record CreatedTaskEvent(
-        String status,
-        String taskId
+        String taskId,
+        AnalyzeRequest analyzeRequest
 ) {
 }

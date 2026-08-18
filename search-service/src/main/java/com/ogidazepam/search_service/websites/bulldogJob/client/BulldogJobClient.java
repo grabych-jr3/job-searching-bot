@@ -32,8 +32,8 @@ public class BulldogJobClient {
         this.redisTemplate = redisTemplate;
     }
 
-    public List<BulldogJobNextData> fetchJobOffers(){
-        List<String> ids = fetchJobOfferIds();
+    public List<BulldogJobNextData> fetchJobOffers(String uri){
+        List<String> ids = fetchJobOfferIds(uri);
 
         List<BulldogJobNextData> jobOffers = new ArrayList<>();
         for(String id : ids){
@@ -42,8 +42,8 @@ public class BulldogJobClient {
         return jobOffers;
     }
 
-    private List<String> fetchJobOfferIds(){
-        JsonNode jobs = extractJobs();
+    private List<String> fetchJobOfferIds(String uri){
+        JsonNode jobs = extractJobs(uri);
 
         List<String> ids = new ArrayList<>();
         for (JsonNode job : jobs){
@@ -58,8 +58,8 @@ public class BulldogJobClient {
         return ids;
     }
 
-    private JsonNode extractJobs(){
-        return jobHttpClient.extractNextDataWithRetry(JOBS_URL)
+    private JsonNode extractJobs(String uri){
+        return jobHttpClient.extractNextDataWithRetry(uri)
                 .path("props")
                 .path("pageProps")
                 .path("jobs");

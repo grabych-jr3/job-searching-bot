@@ -29,8 +29,8 @@ public class PracujPlClient {
         this.redisTemplate = redisTemplate;
     }
 
-    public List<PracujPlOfferData> fetchOffers(){
-        List<String> urls = fetchOffersUrls();
+    public List<PracujPlOfferData> fetchOffers(String uri){
+        List<String> urls = fetchOffersUrls(uri);
 
         List<PracujPlOfferData> offers = new ArrayList<>();
         for (String url : urls){
@@ -43,8 +43,8 @@ public class PracujPlClient {
         return offers;
     }
 
-    private List<String> fetchOffersUrls(){
-        JsonNode dataNode = extractData(JOBS_API_URL);
+    private List<String> fetchOffersUrls(String uri){
+        JsonNode dataNode = extractData(uri);
         PracujPlOffersData data = parseData(dataNode, PracujPlOffersData.class);
 
         return data

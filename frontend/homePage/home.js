@@ -5,6 +5,9 @@ const resultsContainer = document.getElementById('resultsContainer');
 const submitBtn = document.getElementById('submitBtn');
 const sortBtn = document.getElementById('sortBtn');
 const filterButtons = document.querySelectorAll('.filter-btn');
+const technologyOptions = document.querySelectorAll('input[name="technology"]');
+const experienceOptions = document.querySelectorAll('input[name="experience"]');
+const workModeOptions = document.querySelectorAll('input[name="workMode"]');
 
 let taskStream = null;
 let offerResults = [];
@@ -58,25 +61,75 @@ function getFilterRange(filterValue) {
 }
 
 function renderFilteredCards() {
-    const cards = Array.from(resultsContainer.querySelectorAll('.offer-card'));
-    cards.forEach((card) => {
-        const score = Number(card.dataset.score ?? 0);
-        const range = getFilterRange(activeFilter);
+    const range = getFilterRange(activeFilter);
+    const visibleOffers = [...offerResults]
+        .filter((offer) => {
+            if (!range) {
+                return true;
+            }
 
-        if (!range) {
-            card.hidden = false;
-            return;
-        }
+            const score = Number(offer.score ?? 0);
+            return score >= range.min && score <= range.max;
+        })
+        .sort((left, right) => Number(right.score) - Number(left.score));
 
-        const matches = score >= range.min && score <= range.max;
-        card.hidden = !matches;
+    resultsContainer.innerHTML = '';
+
+    if (visibleOffers.length === 0) {
+        const emptyState = document.createElement('div');
+        emptyState.className = 'empty-state';
+        emptyState.textContent = 'No job offers match this score range.';
+        resultsContainer.appendChild(emptyState);
+        return;
+    }
+
+    visibleOffers.forEach((offerResult) => {
+        const card = document.createElement('article');
+        const safeJobTitle = offerResult.jobTitle || 'Untitled position';
+        const safeUrl = offerResult.url || '#';
+        const safeReason = offerResult.reason || 'No explanation provided.';
+        const numericScore = Number(offerResult.score ?? 0);
+        const normalizedScore = Number.isFinite(numericScore) ? Math.min(Math.max(numericScore, 0), 100) : 0;
+        const scoreLabel = `${normalizedScore}/100`;
+        const scoreTier = getScoreTier(normalizedScore);
+
+        card.className = `offer-card ${scoreTier}`;
+        card.dataset.score = String(normalizedScore);
+
+        const header = document.createElement('div');
+        header.className = 'offer-header';
+
+        const title = document.createElement('h2');
+        title.className = 'offer-title';
+        title.textContent = safeJobTitle;
+
+        const scoreBadge = document.createElement('span');
+        scoreBadge.className = `offer-score ${scoreTier}`;
+        scoreBadge.textContent = scoreLabel;
+
+        header.appendChild(title);
+        header.appendChild(scoreBadge);
+
+        const reason = document.createElement('p');
+        reason.className = 'offer-reason';
+        reason.textContent = safeReason;
+
+        const actionLink = document.createElement('a');
+        actionLink.className = 'offer-link-btn';
+        actionLink.href = safeUrl;
+        actionLink.target = '_blank';
+        actionLink.rel = 'noopener noreferrer';
+        actionLink.textContent = 'Open offer';
+
+        card.appendChild(header);
+        card.appendChild(reason);
+        card.appendChild(actionLink);
+        resultsContainer.appendChild(card);
     });
 }
 
 function sortCardsByScore() {
-    const cards = Array.from(resultsContainer.children).filter((node) => node.classList.contains('offer-card'));
-    cards.sort((left, right) => Number(right.dataset.score) - Number(left.dataset.score));
-    cards.forEach((card) => resultsContainer.appendChild(card));
+    offerResults.sort((left, right) => Number(right.score) - Number(left.score));
     renderFilteredCards();
 }
 
@@ -85,43 +138,11 @@ function renderOfferCard(offerResult) {
         return;
     }
 
-    const safeUrl = offerResult.url || 'No URL provided';
-    const safeReason = offerResult.reason || 'No explanation provided.';
+    const safeJobTitle = offerResult.jobTitle || 'Untitled position';
     const numericScore = Number(offerResult.score ?? 0);
     const normalizedScore = Number.isFinite(numericScore) ? Math.min(Math.max(numericScore, 0), 100) : 0;
-    const scoreLabel = `${normalizedScore}/100`;
-    const scoreTier = getScoreTier(normalizedScore);
 
-    const card = document.createElement('article');
-    card.className = `offer-card ${scoreTier}`;
-    card.dataset.score = String(normalizedScore);
-
-    const header = document.createElement('div');
-    header.className = 'offer-header';
-
-    const scoreBadge = document.createElement('span');
-    scoreBadge.className = `offer-score ${scoreTier}`;
-    scoreBadge.textContent = scoreLabel;
-
-    const urlLink = document.createElement('a');
-    urlLink.className = 'offer-url';
-    urlLink.href = safeUrl;
-    urlLink.target = '_blank';
-    urlLink.rel = 'noopener noreferrer';
-    urlLink.textContent = safeUrl;
-
-    header.appendChild(scoreBadge);
-    header.appendChild(urlLink);
-
-    const reason = document.createElement('p');
-    reason.className = 'offer-reason';
-    reason.textContent = safeReason;
-
-    card.appendChild(header);
-    card.appendChild(reason);
-    resultsContainer.prepend(card);
-
-    offerResults.push({ ...offerResult, score: normalizedScore });
+    offerResults.push({ ...offerResult, score: normalizedScore, jobTitle: safeJobTitle });
     renderFilteredCards();
 }
 
@@ -190,6 +211,33 @@ function openTaskStream(taskId) {
     };
 }
 
+function getSelectedValues(selector) {
+    return Array.from(document.querySelectorAll(selector))
+        .filter((checkbox) => checkbox.checked)
+        .map((checkbox) => checkbox.value);
+}
+
+function buildAnalyzeRequestParams() {
+    const technology = getSelectedValues('input[name="technology"]')[0];
+    const experiences = getSelectedValues('input[name="experience"]');
+    const workModes = getSelectedValues('input[name="workMode"]');
+
+    if (!technology) {
+        throw new Error('Please select a technology before sending the file.');
+    }
+
+    if (experiences.length === 0) {
+        throw new Error('Please select at least one experience level.');
+    }
+
+    const params = new URLSearchParams();
+    params.set('technology', String(technology).toLowerCase());
+    experiences.forEach((level) => params.append('experience', String(level).toLowerCase()));
+    workModes.forEach((mode) => params.append('workMode', String(mode).toLowerCase()));
+
+    return params;
+}
+
 form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
@@ -208,7 +256,11 @@ form.addEventListener('submit', async (event) => {
     clearResults();
 
     try {
-        const response = await fetch('http://localhost:8081/api/analyze', {
+        const params = buildAnalyzeRequestParams();
+        const requestUrl = new URL('http://localhost:8081/api/analyze');
+        requestUrl.search = params.toString();
+
+        const response = await fetch(requestUrl.toString(), {
             method: 'POST',
             body: formData
         });

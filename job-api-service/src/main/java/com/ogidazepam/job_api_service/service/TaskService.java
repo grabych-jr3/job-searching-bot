@@ -1,6 +1,7 @@
 package com.ogidazepam.job_api_service.service;
 
 import com.ogidazepam.job_api_service.model.event.CreatedTaskEvent;
+import com.ogidazepam.job_api_service.model.request.AnalyzeRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -8,9 +9,10 @@ import java.util.UUID;
 @Service
 public class TaskService {
 
-    public CreatedTaskEvent createTaskEvent(){
+    public CreatedTaskEvent createTaskEvent(AnalyzeRequest analyzeRequest){
         return CreatedTaskEvent.builder()
                 .taskId(generateTaskId())
+                .analyzeRequest(analyzeRequest)
                 .build();
     }
 

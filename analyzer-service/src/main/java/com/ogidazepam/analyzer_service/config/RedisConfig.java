@@ -21,4 +21,12 @@ public class RedisConfig {
         template.setValueSerializer(RedisSerializer.byteArray());
         return template;
     }
+
+    @Bean RedisTemplate<String, CandidateProfile> candidateRedisTemplate(RedisConnectionFactory connectionFactory){
+        RedisTemplate<String, CandidateProfile> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(RedisSerializer.string());
+        template.setValueSerializer(new JacksonJsonRedisSerializer<>(CandidateProfile.class));
+        return template;
+    }
 }

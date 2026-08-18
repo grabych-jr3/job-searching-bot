@@ -1,5 +1,6 @@
 package com.ogidazepam.analyzer_service.service;
 
+import com.ogidazepam.analyzer_service.model.candidate.CandidateProfile;
 import com.ogidazepam.analyzer_service.model.event.AnalyzedOfferEvent;
 import com.ogidazepam.analyzer_service.model.event.JobOfferEvent;
 import com.ogidazepam.analyzer_service.model.offer.JobOffer;
@@ -20,11 +21,13 @@ public class KafkaConsumerListener {
 
     private final AiAnalyzerService analyzerService;
     private final RedisTemplate<String, byte[]> redisTemplate;
+    private final RedisTemplate<String, CandidateProfile> candidateProfileRedisTemplate;
     private final KafkaProducerService<AnalyzedOfferEvent> kafkaProducerService;
 
-    public KafkaConsumerListener(AiAnalyzerService analyzerService, RedisTemplate<String, byte[]> redisTemplate, KafkaProducerService<AnalyzedOfferEvent> kafkaProducerService) {
+    public KafkaConsumerListener(AiAnalyzerService analyzerService, RedisTemplate<String, byte[]> redisTemplate, RedisTemplate<String, CandidateProfile> candidateProfileRedisTemplate, KafkaProducerService<AnalyzedOfferEvent> kafkaProducerService) {
         this.analyzerService = analyzerService;
         this.redisTemplate = redisTemplate;
+        this.candidateProfileRedisTemplate = candidateProfileRedisTemplate;
         this.kafkaProducerService = kafkaProducerService;
     }
 
@@ -44,6 +47,7 @@ public class KafkaConsumerListener {
             buffers.remove(taskId);
             kafkaProducerService.sendToKafka("completed-offer-topic", AnalyzedOfferEvent.finished(taskId));
             redisTemplate.delete("cv:" + taskId);
+            candidateProfileRedisTemplate.delete("analyzed:cv:" + taskId);
         }
     }
 

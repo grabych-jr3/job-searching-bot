@@ -1,6 +1,7 @@
 package com.ogidazepam.search_service.service;
 
 import com.ogidazepam.search_service.model.JobOffer;
+import com.ogidazepam.search_service.model.event.CreatedTaskEvent;
 import com.ogidazepam.search_service.model.event.JobOfferEvent;
 import com.ogidazepam.search_service.strategy.JobSearcher;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -21,15 +22,15 @@ public class JobSearchService {
         this.redisTemplate = redisTemplate;
     }
 
-        public List<JobOffer> searchAll(String taskId){
+        public List<JobOffer> searchAll(CreatedTaskEvent event){
             List<JobOffer> offers = jobSearchers.stream()
-                    .flatMap(s -> s.search(taskId).stream())
+                    .flatMap(s -> s.search(event).stream())
                     .toList();
     
             offers.forEach(offer -> {
                 kafkaProducerService.sendToKafka(
                         "found-offers-topic",
-                        JobOfferEvent.offer(taskId, offer)
+                        JobOfferEvent.offer(event.taskId(), offer)
                 );
     
                 redisTemplate.opsForValue().set(
@@ -40,7 +41,7 @@ public class JobSearchService {
 
             kafkaProducerService.sendToKafka(
                     "found-offers-topic",
-                    JobOfferEvent.finishedOffer(taskId)
+                    JobOfferEvent.finishedOffer(event.taskId())
             );
     
             return offers;

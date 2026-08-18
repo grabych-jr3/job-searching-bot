@@ -13,14 +13,25 @@ public class AICandidateParser {
     private final ChatClient chatClient;
     private final ResumeService resumeService;
     private final RedisTemplate<String, byte[]> redisTemplate;
+    private final RedisTemplate<String, CandidateProfile> candidateProfileRedisTemplate;
 
-    public AICandidateParser(ChatClient.Builder chatClient, ResumeService resumeService, RedisTemplate<String, byte[]> redisTemplate) {
+    public AICandidateParser(ChatClient.Builder chatClient, ResumeService resumeService, RedisTemplate<String, byte[]> redisTemplate, RedisTemplate<String, CandidateProfile> candidateProfileRedisTemplate) {
         this.chatClient = chatClient.build();
         this.resumeService = resumeService;
         this.redisTemplate = redisTemplate;
+        this.candidateProfileRedisTemplate = candidateProfileRedisTemplate;
     }
 
     public CandidateProfile createCandidateProfile(String taskId){
+        String analyzedCvCacheKey = "analyzed:cv:" + taskId;
+
+        CandidateProfile analyzedCandidateProfile = candidateProfileRedisTemplate
+                .opsForValue()
+                .get(analyzedCvCacheKey);
+        if (analyzedCandidateProfile != null){
+            return analyzedCandidateProfile;
+        }
+
         String cacheKey = "cv:" + taskId;
 
         byte[] cachedProfile = redisTemplate.opsForValue().get(cacheKey);
@@ -30,7 +41,7 @@ public class AICandidateParser {
 
         String pdfText = resumeService.extractTextFromPdf(cachedProfile);
 
-        return chatClient
+        CandidateProfile candidateProfile = chatClient
                 .prompt()
                 .user(u -> u.text(
                         """
@@ -40,5 +51,11 @@ public class AICandidateParser {
                 ).param("cv", pdfText))
                 .call()
                 .entity(CandidateProfile.class);
+
+        if (candidateProfile != null){
+            candidateProfileRedisTemplate.opsForValue().set(analyzedCvCacheKey, candidateProfile, Duration.ofHours(1));
+        }
+
+        return candidateProfile;
     }
 }

@@ -1,5 +1,6 @@
 package com.ogidazepam.search_service.websites.justjoinit.client;
 
+import com.ogidazepam.search_service.model.request.AnalyzeRequest;
 import com.ogidazepam.search_service.utils.HtmlCleaner;
 import com.ogidazepam.search_service.websites.justjoinit.model.JustJoinItJobDetails;
 import com.ogidazepam.search_service.websites.justjoinit.model.JustJoinItJobOffer;
@@ -55,9 +56,9 @@ public class JustJoinItClient {
             maxDelay = 10000,
             jitter = 200
     )
-    public List<JustJoinItJobOffer> fetchJobOffers(){
+    public List<JustJoinItJobOffer> fetchJobOffers(String uri){
         return restClient.get()
-                .uri(JOBS_API_URL)
+                .uri(uri)
                 .retrieve()
                 .body(JustJoinItOffersResponse.class)
                 .data();

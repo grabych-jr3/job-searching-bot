@@ -15,6 +15,6 @@ public class KafkaConsumerService {
 
     @KafkaListener(topics = "search-jobs-topic")
     public void consume(CreatedTaskEvent event){
-        jobSearchService.searchAll(event.taskId());
+        jobSearchService.searchAll(event);
     }
 }
