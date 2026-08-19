@@ -5,7 +5,7 @@
 The bot compares candidate CV against found vacancies and determines match suitability on a scale from 0% to 100%.
 
 ## Tech Stack
-* **Language & Frameworks:** Java 21, Spring Boot 4.0.1, Spring AI
+* **Language & Frameworks:** Java 21, Spring Boot 4.1.0, Spring AI
 * **Messaging & Caching:** Apache Kafka, Redis
 * **Parsing & Documents:** JSoup, Apache PDFBox
 * **AI Integration:** Google GenAI / Gemini API
