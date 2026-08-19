@@ -12,6 +12,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 @Service
 public class JustJoinItJobSearcher implements JobSearcher {
@@ -31,23 +32,25 @@ public class JustJoinItJobSearcher implements JobSearcher {
     }
 
     @Override
-    public List<JobOffer> search(CreatedTaskEvent event) {
+    public void search(CreatedTaskEvent event, Consumer<JobOffer> onFoundJob) {
         String uri = uriBuilder.buildUri(event.analyzeRequest());
-        return justJoinItClient.fetchJobOffers(uri).stream()
+        justJoinItClient.fetchJobOffers(uri).stream()
                 .filter(offer -> {
                     String key = "processed_offer:" + SOURCE + ":" + offer.slug();
                     return !Boolean.TRUE.equals(redisTemplate.hasKey(key));
                 })
-                .map(offer -> {
+                .forEach(offer -> {
                     JustJoinItJobDetails jobDetails = justJoinItClient
                             .fetchJobOffersDetails(offer.slug());
 
-                    return mapper.mapToJobOffer(new JustJoinItJobData(
+                    JobOffer jobOffer = mapper.mapToJobOffer(new JustJoinItJobData(
                             offer,
                             jobDetails
                     ),
-                            event.taskId());
-                })
-                .toList();
+                            event.taskId()
+                    );
+
+                    onFoundJob.accept(jobOffer);
+                });
     }
 }

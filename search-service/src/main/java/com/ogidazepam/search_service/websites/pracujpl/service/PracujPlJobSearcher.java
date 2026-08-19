@@ -10,6 +10,7 @@ import com.ogidazepam.search_service.websites.pracujpl.util.PracujPlUriBuilder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 @Service
 public class PracujPlJobSearcher implements JobSearcher{
@@ -25,11 +26,15 @@ public class PracujPlJobSearcher implements JobSearcher{
     }
 
     @Override
-    public List<JobOffer> search(CreatedTaskEvent event) {
+    public void search(CreatedTaskEvent event, Consumer<JobOffer> onFoundJob) {
         String uri = uriBuilder.buildUri(event.analyzeRequest());
 
-        return pracujPlClient.fetchOffers(uri).stream()
-                .map(offer -> offerMapper.mapToJobOffer(offer, event.taskId()))
-                .toList();
+        pracujPlClient.fetchOffersUrls(uri)
+                        .forEach(url -> {
+                            PracujPlOfferData offerData = pracujPlClient.fetchOffer(url);
+                            JobOffer jobOffer = offerMapper.mapToJobOffer(offerData, event.taskId());
+
+                            onFoundJob.accept(jobOffer);
+                        });
     }
 }

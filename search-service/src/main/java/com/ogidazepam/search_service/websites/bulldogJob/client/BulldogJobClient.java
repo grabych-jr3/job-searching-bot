@@ -32,17 +32,11 @@ public class BulldogJobClient {
         this.redisTemplate = redisTemplate;
     }
 
-    public List<BulldogJobNextData> fetchJobOffers(String uri){
-        List<String> ids = fetchJobOfferIds(uri);
-
-        List<BulldogJobNextData> jobOffers = new ArrayList<>();
-        for(String id : ids){
-            jobOffers.add(extractJob(id));
-        }
-        return jobOffers;
+    public BulldogJobNextData fetchJobOffer(String id){
+        return extractJob(id);
     }
 
-    private List<String> fetchJobOfferIds(String uri){
+    public List<String> fetchJobOfferIds(String uri){
         JsonNode jobs = extractJobs(uri);
 
         List<String> ids = new ArrayList<>();

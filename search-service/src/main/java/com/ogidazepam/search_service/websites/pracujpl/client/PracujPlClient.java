@@ -29,21 +29,12 @@ public class PracujPlClient {
         this.redisTemplate = redisTemplate;
     }
 
-    public List<PracujPlOfferData> fetchOffers(String uri){
-        List<String> urls = fetchOffersUrls(uri);
-
-        List<PracujPlOfferData> offers = new ArrayList<>();
-        for (String url : urls){
-            JsonNode dataNode = extractData(url);
-            PracujPlOfferData offerData = parseData(dataNode, PracujPlOfferData.class);
-
-            offers.add(offerData);
-        }
-
-        return offers;
+    public PracujPlOfferData fetchOffer(String url){
+        JsonNode dataNode = extractData(url);
+        return parseData(dataNode, PracujPlOfferData.class);
     }
 
-    private List<String> fetchOffersUrls(String uri){
+    public List<String> fetchOffersUrls(String uri){
         JsonNode dataNode = extractData(uri);
         PracujPlOffersData data = parseData(dataNode, PracujPlOffersData.class);
 

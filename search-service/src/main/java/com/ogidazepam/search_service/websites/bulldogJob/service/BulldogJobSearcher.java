@@ -9,6 +9,7 @@ import com.ogidazepam.search_service.strategy.JobSearcher;
 import com.ogidazepam.search_service.websites.bulldogJob.util.BulldogJobUriBuilder;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.function.Consumer;
 
 @Service
 public class BulldogJobSearcher implements JobSearcher {
@@ -24,13 +25,15 @@ public class BulldogJobSearcher implements JobSearcher {
     }
 
     @Override
-    public List<JobOffer> search(CreatedTaskEvent event) {
+    public void search(CreatedTaskEvent event, Consumer<JobOffer> onFoundJob) {
         String uri = uriBuilder.buildUri(event.analyzeRequest());
 
-        List<BulldogJobNextData> jobOffers = bulldogJobClient.fetchJobOffers(uri);
+        bulldogJobClient.fetchJobOfferIds(uri)
+                .forEach(id -> {
+                    BulldogJobNextData job = bulldogJobClient.fetchJobOffer(id);
 
-        return jobOffers.stream()
-                .map(offer -> jobMapper.mapToJobOffer(offer, event.taskId()))
-                .toList();
+                    JobOffer jobOffer = jobMapper.mapToJobOffer(job, event.taskId());
+                    onFoundJob.accept(jobOffer);
+                });
     }
 }
