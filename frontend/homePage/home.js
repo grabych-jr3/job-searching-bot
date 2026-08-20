@@ -183,7 +183,7 @@ function openTaskStream(taskId) {
     const streamUrl = `http://localhost:8081/api/tasks/${taskId}/stream`;
     statusEl.textContent = `Listening for vacancy results for task ${taskId}...`;
 
-    taskStream = new EventSource(streamUrl);
+    taskStream = new EventSource(streamUrl, { withCredentials: true });
 
     taskStream.onopen = () => {
         statusEl.textContent = `Connected to task stream for ${taskId}.`;
@@ -238,6 +238,22 @@ function buildAnalyzeRequestParams() {
     return params;
 }
 
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            await fetch('http://localhost:8081/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Logout failed:', error);
+        } finally {
+            window.location.href = '../auth/login.html?logged_out=true';
+        }
+    });
+}
+
 form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
@@ -262,8 +278,18 @@ form.addEventListener('submit', async (event) => {
 
         const response = await fetch(requestUrl.toString(), {
             method: 'POST',
-            body: formData
+            body: formData,
+            // Include HttpOnly cookie credentials
+            credentials: 'include'
         });
+
+        if (response.status === 401 || response.status === 403) {
+            statusEl.textContent = 'Session expired or unauthenticated. Redirecting to login...';
+            setTimeout(() => {
+                window.location.href = '../auth/login.html?expired=true';
+            }, 800);
+            return;
+        }
 
         if (!response.ok) {
             const errorText = await response.text();
