@@ -1,5 +1,6 @@
 package com.ogidazepam.analyzer_service.service;
 
+import com.ogidazepam.analyzer_service.model.OfferResult;
 import com.ogidazepam.analyzer_service.model.candidate.CandidateProfile;
 import com.ogidazepam.analyzer_service.model.event.AnalyzedOfferEvent;
 import com.ogidazepam.analyzer_service.model.event.JobOfferEvent;
@@ -22,12 +23,14 @@ public class KafkaConsumerListener {
     private final AiAnalyzerService analyzerService;
     private final RedisTemplate<String, byte[]> redisTemplate;
     private final RedisTemplate<String, CandidateProfile> candidateProfileRedisTemplate;
+    private final RedisTemplate<String, OfferResult> offerResultRedisTemplate;
     private final KafkaProducerService<AnalyzedOfferEvent> kafkaProducerService;
 
-    public KafkaConsumerListener(AiAnalyzerService analyzerService, RedisTemplate<String, byte[]> redisTemplate, RedisTemplate<String, CandidateProfile> candidateProfileRedisTemplate, KafkaProducerService<AnalyzedOfferEvent> kafkaProducerService) {
+    public KafkaConsumerListener(AiAnalyzerService analyzerService, RedisTemplate<String, byte[]> redisTemplate, RedisTemplate<String, CandidateProfile> candidateProfileRedisTemplate, RedisTemplate<String, OfferResult> offerResultRedisTemplate, KafkaProducerService<AnalyzedOfferEvent> kafkaProducerService) {
         this.analyzerService = analyzerService;
         this.redisTemplate = redisTemplate;
         this.candidateProfileRedisTemplate = candidateProfileRedisTemplate;
+        this.offerResultRedisTemplate = offerResultRedisTemplate;
         this.kafkaProducerService = kafkaProducerService;
     }
 
@@ -37,27 +40,37 @@ public class KafkaConsumerListener {
 
         if(event.type() == JobOfferEvent.EventType.OFFER){
             List<JobOffer> taskBuffer = buffers.computeIfAbsent(taskId, k -> new ArrayList<>());
-            taskBuffer.add(event.offer());
 
-            if (taskBuffer.size() >= BUFFER_MAX_SIZE){
-                flushBuffer(taskId);
+            String cacheKey = "analyzed_offer:" + event.username() + ":" + event.offer().url();
+            OfferResult cachedOfferResult = offerResultRedisTemplate.opsForValue().get(cacheKey);
+            if (cachedOfferResult != null){
+                kafkaProducerService.sendToKafka(
+                        "completed-offer-topic",
+                        AnalyzedOfferEvent.offerResult(event.taskId(), event.username(), cachedOfferResult)
+                );
+            }else{
+                taskBuffer.add(event.offer());
+
+                if (taskBuffer.size() >= BUFFER_MAX_SIZE){
+                    flushBuffer(event);
+                }
             }
         } else{
-            flushBuffer(taskId);
+            flushBuffer(event);
             buffers.remove(taskId);
-            kafkaProducerService.sendToKafka("completed-offer-topic", AnalyzedOfferEvent.finished(taskId));
+            kafkaProducerService.sendToKafka("completed-offer-topic", AnalyzedOfferEvent.finished(taskId, event.username()));
             redisTemplate.delete("cv:" + taskId);
             candidateProfileRedisTemplate.delete("analyzed:cv:" + taskId);
         }
     }
 
-    private void flushBuffer(String taskId){
-        List<JobOffer> taskBuffer = buffers.get(taskId);
+    private void flushBuffer(JobOfferEvent event){
+        List<JobOffer> taskBuffer = buffers.get(event.taskId());
 
         if (taskBuffer != null && !taskBuffer.isEmpty()){
             List<JobOffer> batchToSend = new ArrayList<>(taskBuffer);
 
-            analyzerService.analyze(taskId, batchToSend);
+            analyzerService.analyze(event, batchToSend);
             taskBuffer.clear();
         }
     }

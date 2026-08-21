@@ -9,9 +9,10 @@ import java.util.UUID;
 @Service
 public class TaskService {
 
-    public CreatedTaskEvent createTaskEvent(AnalyzeRequest analyzeRequest){
+    public CreatedTaskEvent createTaskEvent(AnalyzeRequest analyzeRequest, String username){
         return CreatedTaskEvent.builder()
                 .taskId(generateTaskId())
+                .username(username)
                 .analyzeRequest(analyzeRequest)
                 .build();
     }

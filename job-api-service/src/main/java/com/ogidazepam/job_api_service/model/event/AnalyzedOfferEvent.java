@@ -4,6 +4,7 @@ import com.ogidazepam.job_api_service.model.OfferResult;
 
 public record AnalyzedOfferEvent(
         String taskId,
+        String username,
         OfferResult offerResult,
         EventType type
 ) {
@@ -12,11 +13,11 @@ public record AnalyzedOfferEvent(
         ANALYSIS_FINISHED
     }
 
-    public static AnalyzedOfferEvent offerResult(String taskId, OfferResult offerResult){
-        return new AnalyzedOfferEvent(taskId, offerResult, EventType.OFFER);
+    public static AnalyzedOfferEvent offerResult(String taskId, String username, OfferResult offerResult){
+        return new AnalyzedOfferEvent(taskId, username, offerResult, EventType.OFFER);
     }
 
-    public static AnalyzedOfferEvent finished(String taskId){
-        return new AnalyzedOfferEvent(taskId, null, EventType.ANALYSIS_FINISHED);
+    public static AnalyzedOfferEvent finished(String taskId, String username){
+        return new AnalyzedOfferEvent(taskId, username, null, EventType.ANALYSIS_FINISHED);
     }
 }

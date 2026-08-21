@@ -24,12 +24,12 @@ public class JobSearchService {
                     event,
                     offer -> kafkaProducerService.sendToKafka(
                             "found-offers-topic",
-                            JobOfferEvent.offer(event.taskId(), offer)
+                            JobOfferEvent.offer(event.taskId(), event.username(), offer)
                     ));
         }
         kafkaProducerService.sendToKafka(
                 "found-offers-topic",
-                JobOfferEvent.finishedOffer(event.taskId())
+                JobOfferEvent.finishedOffer(event.taskId(), event.username())
         );
     }
 }
