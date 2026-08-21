@@ -1,6 +1,7 @@
 package com.ogidazepam.search_service.websites.justjoinit.service;
 
 import com.ogidazepam.search_service.model.event.CreatedTaskEvent;
+import com.ogidazepam.search_service.utils.RedisCacheService;
 import com.ogidazepam.search_service.websites.justjoinit.client.JustJoinItClient;
 import com.ogidazepam.search_service.websites.justjoinit.mapper.JustJoinItMapper;
 import com.ogidazepam.search_service.model.JobOffer;
@@ -22,35 +23,38 @@ public class JustJoinItJobSearcher implements JobSearcher {
     private final JustJoinItMapper mapper;
     private final JustJoinItUriBuilder uriBuilder;
     private final JustJoinItClient justJoinItClient;
-    private final RedisTemplate<String, Boolean> redisTemplate;
+    private final RedisCacheService redisCacheService;
 
-    public JustJoinItJobSearcher(JustJoinItMapper mapper, JustJoinItUriBuilder uriBuilder, JustJoinItClient justJoinItClient, RedisTemplate<String, Boolean> redisTemplate) {
+    public JustJoinItJobSearcher(JustJoinItMapper mapper, JustJoinItUriBuilder uriBuilder, JustJoinItClient justJoinItClient, RedisCacheService redisCacheService) {
         this.mapper = mapper;
         this.uriBuilder = uriBuilder;
         this.justJoinItClient = justJoinItClient;
-        this.redisTemplate = redisTemplate;
+        this.redisCacheService = redisCacheService;
     }
 
     @Override
     public void search(CreatedTaskEvent event, Consumer<JobOffer> onFoundJob) {
         String uri = uriBuilder.buildUri(event.analyzeRequest());
-        justJoinItClient.fetchJobOffers(uri).stream()
-                .filter(offer -> {
-                    String key = "processed_offer:" + SOURCE + ":" + offer.slug();
-                    return !Boolean.TRUE.equals(redisTemplate.hasKey(key));
-                })
+        justJoinItClient.fetchJobOffers(uri)
                 .forEach(offer -> {
-                    JustJoinItJobDetails jobDetails = justJoinItClient
-                            .fetchJobOffersDetails(offer.slug());
+                    JobOffer cachedJobOffer = redisCacheService.getJobOfferFromCache(offer.slug());
 
-                    JobOffer jobOffer = mapper.mapToJobOffer(new JustJoinItJobData(
-                            offer,
-                            jobDetails
-                    ),
-                            event.taskId()
-                    );
+                    if (cachedJobOffer != null){
+                        onFoundJob.accept(cachedJobOffer);
+                    } else {
+                        JustJoinItJobDetails jobDetails = justJoinItClient
+                                .fetchJobOffersDetails(offer.slug());
 
-                    onFoundJob.accept(jobOffer);
+                        JobOffer jobOffer = mapper.mapToJobOffer(new JustJoinItJobData(
+                                        offer,
+                                        jobDetails
+                                ),
+                                event.taskId()
+                        );
+
+                        onFoundJob.accept(jobOffer);
+                        redisCacheService.writeJobOfferToCache(jobOffer);
+                    }
                 });
     }
 }
