@@ -297,6 +297,7 @@ button:disabled {
 }
 
 .empty-state {
+    grid-column: 1 / -1;
     padding: 18px 16px;
     border-radius: 12px;
     background: #f6f8ff;

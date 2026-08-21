@@ -109,7 +109,9 @@ function renderFilteredCards() {
     if (visibleOffers.length === 0) {
         const emptyState = document.createElement('div');
         emptyState.className = 'empty-state';
-        emptyState.textContent = 'No job offers match this score range.';
+        emptyState.textContent = offerResults.length === 0
+            ? 'No offers by this request or nothing new'
+            : 'No job offers match this score range.';
         resultsContainer.appendChild(emptyState);
         return;
     }
@@ -213,6 +215,7 @@ function openTaskStream(taskId) {
 
     const streamUrl = `${API_BASE_URL}/api/tasks/${taskId}/stream`;
     statusEl.textContent = `Listening for vacancy results for task ${taskId}...`;
+    resultsContainer.innerHTML = '<div class="empty-state">Analyzing vacancies, please wait...</div>';
 
     taskStream = new EventSource(streamUrl, { withCredentials: true });
 
@@ -230,6 +233,10 @@ function openTaskStream(taskId) {
             ? `Task ${taskId} completed.`
             : `Task ${taskId} finished.`;
         closeTaskStream();
+
+        if (offerResults.length === 0) {
+            resultsContainer.innerHTML = '<div class="empty-state">No offers by this request or nothing new</div>';
+        }
     });
 
     taskStream.onmessage = (event) => {
@@ -239,6 +246,10 @@ function openTaskStream(taskId) {
     taskStream.onerror = () => {
         statusEl.textContent = `Connection to task ${taskId} stream failed.`;
         closeTaskStream();
+
+        if (offerResults.length === 0) {
+            resultsContainer.innerHTML = '<div class="empty-state">No offers by this request or nothing new</div>';
+        }
     };
 }
 

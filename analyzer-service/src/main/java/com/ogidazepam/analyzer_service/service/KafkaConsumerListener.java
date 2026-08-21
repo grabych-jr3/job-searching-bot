@@ -43,12 +43,7 @@ public class KafkaConsumerListener {
 
             String cacheKey = "analyzed_offer:" + event.username() + ":" + event.offer().url();
             OfferResult cachedOfferResult = offerResultRedisTemplate.opsForValue().get(cacheKey);
-            if (cachedOfferResult != null){
-                kafkaProducerService.sendToKafka(
-                        "completed-offer-topic",
-                        AnalyzedOfferEvent.offerResult(event.taskId(), event.username(), cachedOfferResult)
-                );
-            }else{
+            if (cachedOfferResult == null){
                 taskBuffer.add(event.offer());
 
                 if (taskBuffer.size() >= BUFFER_MAX_SIZE){
