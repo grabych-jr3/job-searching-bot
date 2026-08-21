@@ -1,3 +1,34 @@
+const API_BASE_URL = 'http://localhost:8081';
+
+// Route Guard: verify session with backend before rendering page
+async function checkAuth() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            window.location.replace('../auth/login.html?expired=true');
+            return;
+        }
+
+        const data = await response.json();
+        const userEmailEl = document.getElementById('userEmail');
+        if (userEmailEl && data.email) {
+            userEmailEl.textContent = data.email;
+        }
+
+        // Show page content
+        document.body.classList.add('authenticated');
+    } catch (error) {
+        console.error('Auth verification failed:', error);
+        window.location.replace('../auth/login.html?expired=true');
+    }
+}
+
+checkAuth();
+
 const form = document.getElementById('uploadForm');
 const fileInput = document.getElementById('fileInput');
 const statusEl = document.getElementById('status');
@@ -180,7 +211,7 @@ function openTaskStream(taskId) {
     closeTaskStream();
     clearResults();
 
-    const streamUrl = `http://localhost:8081/api/tasks/${taskId}/stream`;
+    const streamUrl = `${API_BASE_URL}/api/tasks/${taskId}/stream`;
     statusEl.textContent = `Listening for vacancy results for task ${taskId}...`;
 
     taskStream = new EventSource(streamUrl, { withCredentials: true });
@@ -242,7 +273,7 @@ const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
         try {
-            await fetch('http://localhost:8081/api/auth/logout', {
+            await fetch(`${API_BASE_URL}/api/auth/logout`, {
                 method: 'POST',
                 credentials: 'include'
             });
@@ -273,7 +304,7 @@ form.addEventListener('submit', async (event) => {
 
     try {
         const params = buildAnalyzeRequestParams();
-        const requestUrl = new URL('http://localhost:8081/api/analyze');
+        const requestUrl = new URL(`${API_BASE_URL}/api/analyze`);
         requestUrl.search = params.toString();
 
         const response = await fetch(requestUrl.toString(), {

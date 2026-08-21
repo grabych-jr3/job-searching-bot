@@ -64,6 +64,16 @@ body {
     gap: 12px;
 }
 
+.user-email {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: #f0f4ff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
 .nav-btn {
     display: inline-flex;
     align-items: center;
@@ -90,6 +100,12 @@ body {
 .logout-btn:hover {
     background: #fee2e2;
     transform: translateY(-1px);
+}
+
+/* Auth Guard: Hide content until authentication is verified to prevent flicker */
+body:not(.authenticated) .top-nav,
+body:not(.authenticated) .page-shell {
+    display: none;
 }
 
 .page-shell {
