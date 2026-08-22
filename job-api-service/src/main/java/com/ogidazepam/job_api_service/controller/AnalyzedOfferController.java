@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -26,9 +27,14 @@ public class AnalyzedOfferController {
     @GetMapping("/history")
     public ResponseEntity<Page<AnalyzedOffer>> getCustomerHistory(
             @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) Integer minScore,
+            @RequestParam(required = false) Integer maxScore,
+            @RequestParam(required = false) String search,
             @PageableDefault(size = 20, sort = "analyzedAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        Page<AnalyzedOffer> history = analyzedOfferService.getCustomerHistory(userDetails.getCustomerId(), pageable);
+        Page<AnalyzedOffer> history = analyzedOfferService.getCustomerHistory(
+                userDetails.getCustomerId(), minScore, maxScore, search, pageable
+        );
         return ResponseEntity.ok(history);
     }
 }

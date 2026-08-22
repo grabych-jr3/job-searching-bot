@@ -2,6 +2,7 @@ package com.ogidazepam.job_api_service.auth.config;
 
 import com.ogidazepam.job_api_service.auth.filter.JwtAuthenticationFilter;
 import com.ogidazepam.job_api_service.auth.util.CustomUserDetailsService;
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -37,7 +38,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
+                        .requestMatchers("/api/auth/**", "/error").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

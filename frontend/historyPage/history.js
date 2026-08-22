@@ -123,6 +123,16 @@ async function loadHistory(page = 0) {
             url.searchParams.set('sort', currentSort);
         }
 
+        const range = getFilterRange(activeScoreFilter);
+        if (range) {
+            url.searchParams.set('minScore', String(range.min));
+            url.searchParams.set('maxScore', String(range.max));
+        }
+
+        if (searchQuery && searchQuery.trim().length > 0) {
+            url.searchParams.set('search', searchQuery.trim());
+        }
+
         const response = await fetch(url.toString(), {
             method: 'GET',
             credentials: 'include'
@@ -164,63 +174,43 @@ async function loadHistory(page = 0) {
     }
 }
 
-// Filter and render offers
+// Render offers
 function renderOffers() {
     resultsContainer.innerHTML = '';
 
-    if (allPageOffers.length === 0 && totalElements === 0) {
-        resultsContainer.innerHTML = `
-            <div class="empty-state">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted); opacity: 0.6;">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-                <p>No analyzed offers yet. Run your first job offer analysis!</p>
-                <a href="../homePage/home.html" class="empty-action-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
+    if (allPageOffers.length === 0) {
+        const isFiltered = activeScoreFilter !== 'all' || (searchQuery && searchQuery.trim().length > 0);
+        if (isFiltered) {
+            resultsContainer.innerHTML = `
+                <div class="empty-state">
+                    <p>No analyzed offers match the current filter or search criteria.</p>
+                </div>
+            `;
+        } else {
+            resultsContainer.innerHTML = `
+                <div class="empty-state">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted); opacity: 0.6;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
                     </svg>
-                    Analyze New Offers
-                </a>
-            </div>
-        `;
+                    <p>No analyzed offers yet. Run your first job offer analysis!</p>
+                    <a href="../homePage/home.html" class="empty-action-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        Analyze New Offers
+                    </a>
+                </div>
+            `;
+        }
         if (paginationNav) paginationNav.style.display = 'none';
         return;
     }
 
-    const range = getFilterRange(activeScoreFilter);
-    const query = searchQuery.trim().toLowerCase();
-
-    const filtered = allPageOffers.filter((offer) => {
-        const score = Number(offer.score ?? 0);
-        if (range && (score < range.min || score > range.max)) {
-            return false;
-        }
-
-        if (query) {
-            const title = (offer.jobTitle || '').toLowerCase();
-            const reason = (offer.reason || '').toLowerCase();
-            if (!title.includes(query) && !reason.includes(query)) {
-                return false;
-            }
-        }
-
-        return true;
-    });
-
-    if (filtered.length === 0) {
-        resultsContainer.innerHTML = `
-            <div class="empty-state">
-                <p>No analyzed offers match the current filters on this page.</p>
-            </div>
-        `;
-        return;
-    }
-
-    filtered.forEach((offer) => {
+    allPageOffers.forEach((offer) => {
         const card = document.createElement('article');
         const safeTitle = offer.jobTitle || 'Untitled position';
         const safeUrl = offer.offerUrl || offer.url || '#';
@@ -336,17 +326,21 @@ filterButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
         activeScoreFilter = btn.dataset.filter;
         filterButtons.forEach((b) => b.classList.toggle('active', b === btn));
-        renderOffers();
+        loadHistory(0);
     });
 });
 
+let searchDebounceTimer = null;
 if (searchInput) {
     searchInput.addEventListener('input', (e) => {
         searchQuery = e.target.value;
         if (clearSearchBtn) {
             clearSearchBtn.style.display = searchQuery.length > 0 ? 'block' : 'none';
         }
-        renderOffers();
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+            loadHistory(0);
+        }, 300);
     });
 }
 
@@ -356,7 +350,7 @@ if (clearSearchBtn) {
             searchInput.value = '';
             searchQuery = '';
             clearSearchBtn.style.display = 'none';
-            renderOffers();
+            loadHistory(0);
         }
     });
 }

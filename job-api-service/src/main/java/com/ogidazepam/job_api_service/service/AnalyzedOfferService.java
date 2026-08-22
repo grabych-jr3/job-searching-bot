@@ -19,13 +19,25 @@ public class AnalyzedOfferService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AnalyzedOffer> getCustomerHistory(Long customerId, Pageable pageable){
+    public Page<AnalyzedOffer> getCustomerHistory(Long customerId, Integer minScore, Integer maxScore, String search, Pageable pageable){
+        if (minScore != null || maxScore != null || (search != null && !search.isBlank())) {
+            return analyzedOfferRepository.findByCustomerIdWithFilters(
+                    customerId, minScore, maxScore, search != null ? search.trim() : null, pageable
+            );
+        }
         return analyzedOfferRepository.findByCustomerId(customerId, pageable);
     }
 
     @Transactional
     public void saveAnalyzedOffer(AnalyzedOfferEvent offerEvent){
-        analyzedOfferRepository.save(toAnalyzedOffer(offerEvent));
+        OfferResult offerResult = offerEvent.offerResult();
+        analyzedOfferRepository.insertIfNotExists(
+                offerEvent.customerId(),
+                offerResult.url(),
+                offerResult.jobTitle(),
+                offerResult.reason(),
+                offerResult.score()
+        );
     }
 
     private AnalyzedOffer toAnalyzedOffer(AnalyzedOfferEvent offerEvent){

@@ -13,7 +13,15 @@ import java.time.OffsetDateTime;
 @Getter
 @Setter
 @Builder
-@Table(name = "analyzed_offer")
+@Table(
+        name = "analyzed_offer",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_customer_url",
+                        columnNames = {"customer_id", "offer_url"}
+                )
+        }
+)
 public class AnalyzedOffer {
 
     @Id
