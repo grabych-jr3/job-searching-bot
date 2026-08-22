@@ -3,9 +3,11 @@ package com.ogidazepam.analyzer_service.service;
 import com.ogidazepam.analyzer_service.model.OfferResult;
 import com.ogidazepam.analyzer_service.model.candidate.CandidateProfile;
 import com.ogidazepam.analyzer_service.model.event.AnalyzedOfferEvent;
+import com.ogidazepam.analyzer_service.model.event.JobOfferEvent;
 import com.ogidazepam.analyzer_service.model.offer.JobOffer;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,15 +18,17 @@ public class AiAnalyzerService {
     private final ChatClient chatClient;
     private final AICandidateParser aiCandidateParser;
     private final KafkaProducerService<AnalyzedOfferEvent> kafkaProducerService;
+    private final RedisTemplate<String, OfferResult> offerResultRedisTemplate;
 
-    public AiAnalyzerService(ChatClient.Builder chatClient, AICandidateParser aiCandidateParser, KafkaProducerService<AnalyzedOfferEvent> kafkaProducerService) {
+    public AiAnalyzerService(ChatClient.Builder chatClient, AICandidateParser aiCandidateParser, KafkaProducerService<AnalyzedOfferEvent> kafkaProducerService, RedisTemplate<String, OfferResult> offerResultRedisTemplate) {
         this.chatClient = chatClient.build();
         this.aiCandidateParser = aiCandidateParser;
         this.kafkaProducerService = kafkaProducerService;
+        this.offerResultRedisTemplate = offerResultRedisTemplate;
     }
 
-    public void analyze(String taskId, List<JobOffer> offers){
-        CandidateProfile candidateProfile = aiCandidateParser.createCandidateProfile(taskId);
+    public void analyze(JobOfferEvent event, List<JobOffer> offers){
+        CandidateProfile candidateProfile = aiCandidateParser.createCandidateProfile(event.taskId());
 
         List<OfferResult> offerResults = chatClient.prompt()
                 .system(s -> s.text(
@@ -46,7 +50,18 @@ public class AiAnalyzerService {
                 .entity(new ParameterizedTypeReference<List<OfferResult>>(){});
 
         if (offerResults != null){
-            offerResults.forEach(offer -> kafkaProducerService.sendToKafka("completed-offer-topic", AnalyzedOfferEvent.offerResult(taskId, offer)));
+            offerResults.forEach(offer -> {
+                kafkaProducerService.sendToKafka(
+                        "completed-offer-topic",
+                        AnalyzedOfferEvent.offerResult(event.taskId(), event.customerId(), offer)
+                );
+
+                String cacheKey = "analyzed_offer:" + event.customerId() + ":" + offer.url();
+                offerResultRedisTemplate.opsForValue().set(
+                        cacheKey,
+                        offer
+                );
+            });
         }
     }
 }

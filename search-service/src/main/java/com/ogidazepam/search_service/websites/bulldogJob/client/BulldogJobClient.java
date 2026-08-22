@@ -18,18 +18,15 @@ import java.util.List;
 @Component
 public class BulldogJobClient {
 
-    private static final String JOBS_URL = "https://bulldogjob.pl/companies/jobs/s/skills,Java/experienceLevel,intern,junior";
     private static final String JOB_URL = "https://bulldogjob.pl/companies/jobs/";
     private static final String SOURCE = "BulldogJob";
 
     private final ObjectMapper objectMapper;
     private final JobHttpClient jobHttpClient;
-    private final RedisTemplate<String, Boolean> redisTemplate;
 
-    public BulldogJobClient(ObjectMapper objectMapper, JobHttpClient jobHttpClient, RedisTemplate<String, Boolean> redisTemplate) {
+    public BulldogJobClient(ObjectMapper objectMapper, JobHttpClient jobHttpClient) {
         this.objectMapper = objectMapper;
         this.jobHttpClient = jobHttpClient;
-        this.redisTemplate = redisTemplate;
     }
 
     public BulldogJobNextData fetchJobOffer(String id){
@@ -42,11 +39,6 @@ public class BulldogJobClient {
         List<String> ids = new ArrayList<>();
         for (JsonNode job : jobs){
             String id = job.path("id").stringValue();
-            String key = "processed_offer:" + SOURCE + ":" + id;
-
-            if (redisTemplate.hasKey(key)) {
-                continue;
-            }
             ids.add(id);
         }
         return ids;

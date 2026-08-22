@@ -1,3 +1,34 @@
+const API_BASE_URL = 'http://localhost:8081';
+
+// Route Guard: verify session with backend before rendering page
+async function checkAuth() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            window.location.replace('../auth/login.html?expired=true');
+            return;
+        }
+
+        const data = await response.json();
+        const userEmailEl = document.getElementById('userEmail');
+        if (userEmailEl && data.email) {
+            userEmailEl.textContent = data.email;
+        }
+
+        // Show page content
+        document.body.classList.add('authenticated');
+    } catch (error) {
+        console.error('Auth verification failed:', error);
+        window.location.replace('../auth/login.html?expired=true');
+    }
+}
+
+checkAuth();
+
 const form = document.getElementById('uploadForm');
 const fileInput = document.getElementById('fileInput');
 const statusEl = document.getElementById('status');
@@ -78,7 +109,9 @@ function renderFilteredCards() {
     if (visibleOffers.length === 0) {
         const emptyState = document.createElement('div');
         emptyState.className = 'empty-state';
-        emptyState.textContent = 'No job offers match this score range.';
+        emptyState.textContent = offerResults.length === 0
+            ? 'No offers by this request or nothing new'
+            : 'No job offers match this score range.';
         resultsContainer.appendChild(emptyState);
         return;
     }
@@ -180,10 +213,11 @@ function openTaskStream(taskId) {
     closeTaskStream();
     clearResults();
 
-    const streamUrl = `http://localhost:8081/api/tasks/${taskId}/stream`;
+    const streamUrl = `${API_BASE_URL}/api/tasks/${taskId}/stream`;
     statusEl.textContent = `Listening for vacancy results for task ${taskId}...`;
+    resultsContainer.innerHTML = '<div class="empty-state">Analyzing vacancies, please wait...</div>';
 
-    taskStream = new EventSource(streamUrl);
+    taskStream = new EventSource(streamUrl, { withCredentials: true });
 
     taskStream.onopen = () => {
         statusEl.textContent = `Connected to task stream for ${taskId}.`;
@@ -199,6 +233,10 @@ function openTaskStream(taskId) {
             ? `Task ${taskId} completed.`
             : `Task ${taskId} finished.`;
         closeTaskStream();
+
+        if (offerResults.length === 0) {
+            resultsContainer.innerHTML = '<div class="empty-state">No offers by this request or nothing new</div>';
+        }
     });
 
     taskStream.onmessage = (event) => {
@@ -208,6 +246,10 @@ function openTaskStream(taskId) {
     taskStream.onerror = () => {
         statusEl.textContent = `Connection to task ${taskId} stream failed.`;
         closeTaskStream();
+
+        if (offerResults.length === 0) {
+            resultsContainer.innerHTML = '<div class="empty-state">No offers by this request or nothing new</div>';
+        }
     };
 }
 
@@ -238,6 +280,22 @@ function buildAnalyzeRequestParams() {
     return params;
 }
 
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            await fetch(`${API_BASE_URL}/api/auth/logout`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Logout failed:', error);
+        } finally {
+            window.location.href = '../auth/login.html?logged_out=true';
+        }
+    });
+}
+
 form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
@@ -257,13 +315,23 @@ form.addEventListener('submit', async (event) => {
 
     try {
         const params = buildAnalyzeRequestParams();
-        const requestUrl = new URL('http://localhost:8081/api/analyze');
+        const requestUrl = new URL(`${API_BASE_URL}/api/analyze`);
         requestUrl.search = params.toString();
 
         const response = await fetch(requestUrl.toString(), {
             method: 'POST',
-            body: formData
+            body: formData,
+            // Include HttpOnly cookie credentials
+            credentials: 'include'
         });
+
+        if (response.status === 401 || response.status === 403) {
+            statusEl.textContent = 'Session expired or unauthenticated. Redirecting to login...';
+            setTimeout(() => {
+                window.location.href = '../auth/login.html?expired=true';
+            }, 800);
+            return;
+        }
 
         if (!response.ok) {
             const errorText = await response.text();

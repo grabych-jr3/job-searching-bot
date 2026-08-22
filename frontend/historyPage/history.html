@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis History - Job Analyzer</title>
+    <link rel="stylesheet" href="history.css">
+</head>
+<body>
+    <header class="top-nav">
+        <div class="nav-container">
+            <a href="../homePage/home.html" class="brand" title="Back to Analyzer">
+                <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+                <span>Job Analyzer</span>
+            </a>
+            <div class="nav-actions">
+                <a href="../homePage/home.html" class="nav-btn analyzer-nav-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    New Analysis
+                </a>
+                <span id="userEmail" class="user-email"></span>
+                <button type="button" id="logoutBtn" class="nav-btn logout-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Sign Out
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="page-shell">
+        <header class="history-hero">
+            <div class="hero-text">
+                <h1>Analyzed Offers History</h1>
+                <p>Browse, filter, and review all previous job offer evaluations for your resume.</p>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-badge">
+                    <span class="stat-label">Total Analyzed</span>
+                    <span id="totalCount" class="stat-value">0</span>
+                </div>
+            </div>
+        </header>
+
+        <section class="controls-panel">
+            <div class="search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Search by job title or keyword..." autocomplete="off">
+                <button type="button" id="clearSearchBtn" class="clear-search-btn" title="Clear search" aria-label="Clear search" style="display: none;">
+                    &times;
+                </button>
+            </div>
+
+            <div class="filters-row">
+                <div class="filter-group" aria-label="Filter offers by score tier">
+                    <button class="filter-btn active" data-filter="all" type="button">All Scores</button>
+                    <button class="filter-btn" data-filter="80-100" type="button">80–100</button>
+                    <button class="filter-btn" data-filter="70-79" type="button">70–79</button>
+                    <button class="filter-btn" data-filter="50-69" type="button">50–69</button>
+                    <button class="filter-btn" data-filter="0-49" type="button">0–49</button>
+                </div>
+
+                <div class="controls-right">
+                    <div class="sort-wrapper">
+                        <label for="sortSelect" class="sort-label">Sort:</label>
+                        <select id="sortSelect" class="sort-select">
+                            <option value="analyzedAt,desc">Newest First</option>
+                            <option value="analyzedAt,asc">Oldest First</option>
+                            <option value="score,desc">Highest Score</option>
+                            <option value="score,asc">Lowest Score</option>
+                        </select>
+                    </div>
+
+                    <button type="button" id="refreshBtn" class="refresh-btn" title="Refresh history">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="results-panel" aria-live="polite">
+            <div id="resultsContainer" class="results-container">
+                <div class="empty-state">Loading analysis history...</div>
+            </div>
+
+            <nav id="paginationNav" class="pagination-bar" aria-label="History pagination" style="display: none;">
+                <div class="pagination-info">
+                    <span id="pageInfoText">Page 1 of 1</span>
+                    <div class="page-size-selector">
+                        <label for="pageSizeSelect">Show:</label>
+                        <select id="pageSizeSelect">
+                            <option value="12">12</option>
+                            <option value="20" selected>20</option>
+                            <option value="40">40</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="pagination-controls">
+                    <button type="button" id="firstPageBtn" class="page-btn" title="First Page" disabled>&laquo;</button>
+                    <button type="button" id="prevPageBtn" class="page-btn" title="Previous Page" disabled>&lsaquo; Prev</button>
+                    <div id="pageNumberButtons" class="page-numbers"></div>
+                    <button type="button" id="nextPageBtn" class="page-btn" title="Next Page" disabled>Next &rsaquo;</button>
+                    <button type="button" id="lastPageBtn" class="page-btn" title="Last Page" disabled>&raquo;</button>
+                </div>
+            </nav>
+        </section>
+    </main>
+
+    <script src="history.js"></script>
+</body>
+</html>

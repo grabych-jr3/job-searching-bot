@@ -7,9 +7,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class KafkaConsumerService {
 
+    private final AnalyzedOfferService analyzedOfferService;
     private final SSENotificationService sseNotificationService;
 
-    public KafkaConsumerService(SSENotificationService sseNotificationService) {
+    public KafkaConsumerService(AnalyzedOfferService analyzedOfferService, SSENotificationService sseNotificationService) {
+        this.analyzedOfferService = analyzedOfferService;
         this.sseNotificationService = sseNotificationService;
     }
 
@@ -19,6 +21,7 @@ public class KafkaConsumerService {
 
         if (event.type() == AnalyzedOfferEvent.EventType.OFFER){
             sseNotificationService.sendOffer(taskId, event.offerResult());
+            analyzedOfferService.saveAnalyzedOffer(event);
         }else {
             sseNotificationService.sendCompletion(taskId);
         }

@@ -6,6 +6,7 @@ import lombok.Builder;
 @Builder
 public record CreatedTaskEvent(
         String taskId,
+        Long customerId,
         AnalyzeRequest analyzeRequest
 ) {
 }

@@ -1,5 +1,6 @@
 package com.ogidazepam.analyzer_service.config;
 
+import com.ogidazepam.analyzer_service.model.OfferResult;
 import com.ogidazepam.analyzer_service.model.candidate.CandidateProfile;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,11 +23,21 @@ public class RedisConfig {
         return template;
     }
 
-    @Bean RedisTemplate<String, CandidateProfile> candidateRedisTemplate(RedisConnectionFactory connectionFactory){
+    @Bean
+    public RedisTemplate<String, CandidateProfile> candidateRedisTemplate(RedisConnectionFactory connectionFactory){
         RedisTemplate<String, CandidateProfile> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(RedisSerializer.string());
         template.setValueSerializer(new JacksonJsonRedisSerializer<>(CandidateProfile.class));
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, OfferResult> offerResultRedisTemplate(RedisConnectionFactory connectionFactory){
+        RedisTemplate<String, OfferResult> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(RedisSerializer.string());
+        template.setValueSerializer(new JacksonJsonRedisSerializer<>(OfferResult.class));
         return template;
     }
 }
