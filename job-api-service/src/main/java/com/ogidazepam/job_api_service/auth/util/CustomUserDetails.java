@@ -25,4 +25,6 @@ public record CustomUserDetails(Customer customer) implements UserDetails {
     public String getUsername() {
         return customer.getEmail();
     }
+
+    public Long getCustomerId() { return customer.getId(); }
 }

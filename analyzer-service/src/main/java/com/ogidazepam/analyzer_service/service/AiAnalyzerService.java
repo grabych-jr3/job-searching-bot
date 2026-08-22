@@ -53,10 +53,10 @@ public class AiAnalyzerService {
             offerResults.forEach(offer -> {
                 kafkaProducerService.sendToKafka(
                         "completed-offer-topic",
-                        AnalyzedOfferEvent.offerResult(event.taskId(), event.username(), offer)
+                        AnalyzedOfferEvent.offerResult(event.taskId(), event.customerId(), offer)
                 );
 
-                String cacheKey = "analyzed_offer:" + event.username() + ":" + offer.url();
+                String cacheKey = "analyzed_offer:" + event.customerId() + ":" + offer.url();
                 offerResultRedisTemplate.opsForValue().set(
                         cacheKey,
                         offer

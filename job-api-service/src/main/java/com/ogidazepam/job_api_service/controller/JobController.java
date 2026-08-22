@@ -1,5 +1,6 @@
 package com.ogidazepam.job_api_service.controller;
 
+import com.ogidazepam.job_api_service.auth.util.CustomUserDetails;
 import com.ogidazepam.job_api_service.model.event.CreatedTaskEvent;
 import com.ogidazepam.job_api_service.model.request.AnalyzeRequest;
 import com.ogidazepam.job_api_service.service.KafkaProducerService;
@@ -36,9 +37,9 @@ public class JobController {
     public ResponseEntity<CreatedTaskEvent> analyzeOffers(
             AnalyzeRequest analyzeRequest,
             @RequestPart("file")MultipartFile file,
-            @AuthenticationPrincipal UserDetails userDetails
+            @AuthenticationPrincipal CustomUserDetails userDetails
             ) throws IOException {
-        CreatedTaskEvent event = taskService.createTaskEvent(analyzeRequest, userDetails.getUsername());
+        CreatedTaskEvent event = taskService.createTaskEvent(analyzeRequest, userDetails.getCustomerId());
 
         bytesRedisTemplate.opsForValue().set("cv:" + event.taskId(), file.getBytes(), Duration.ofHours(1));
         kafkaProducerService.sendToKafka("search-jobs-topic", event);

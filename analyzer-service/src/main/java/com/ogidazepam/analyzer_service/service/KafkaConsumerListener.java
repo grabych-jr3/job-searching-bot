@@ -41,7 +41,7 @@ public class KafkaConsumerListener {
         if(event.type() == JobOfferEvent.EventType.OFFER){
             List<JobOffer> taskBuffer = buffers.computeIfAbsent(taskId, k -> new ArrayList<>());
 
-            String cacheKey = "analyzed_offer:" + event.username() + ":" + event.offer().url();
+            String cacheKey = "analyzed_offer:" + event.customerId() + ":" + event.offer().url();
             OfferResult cachedOfferResult = offerResultRedisTemplate.opsForValue().get(cacheKey);
             if (cachedOfferResult == null){
                 taskBuffer.add(event.offer());
@@ -53,7 +53,7 @@ public class KafkaConsumerListener {
         } else{
             flushBuffer(event);
             buffers.remove(taskId);
-            kafkaProducerService.sendToKafka("completed-offer-topic", AnalyzedOfferEvent.finished(taskId, event.username()));
+            kafkaProducerService.sendToKafka("completed-offer-topic", AnalyzedOfferEvent.finished(taskId, event.customerId()));
             redisTemplate.delete("cv:" + taskId);
             candidateProfileRedisTemplate.delete("analyzed:cv:" + taskId);
         }
