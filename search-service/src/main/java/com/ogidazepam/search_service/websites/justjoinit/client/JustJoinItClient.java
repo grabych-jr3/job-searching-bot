@@ -1,7 +1,5 @@
 package com.ogidazepam.search_service.websites.justjoinit.client;
 
-import com.ogidazepam.search_service.model.request.AnalyzeRequest;
-import com.ogidazepam.search_service.utils.HtmlCleaner;
 import com.ogidazepam.search_service.websites.justjoinit.model.JustJoinItJobDetails;
 import com.ogidazepam.search_service.websites.justjoinit.model.JustJoinItJobOffer;
 import com.ogidazepam.search_service.websites.justjoinit.model.JustJoinItOffersResponse;
@@ -21,12 +19,10 @@ public class JustJoinItClient {
     private static final String JOB_API_URL = "https://justjoin.it/api/candidate-api/offers/";
 
     private final RestClient restClient;
-    private final HtmlCleaner htmlCleaner;
     private final ObjectMapper objectMapper;
 
-    public JustJoinItClient(RestClient restClient, HtmlCleaner htmlCleaner, ObjectMapper objectMapper) {
+    public JustJoinItClient(RestClient restClient, ObjectMapper objectMapper) {
         this.restClient = restClient;
-        this.htmlCleaner = htmlCleaner;
         this.objectMapper = objectMapper;
     }
 
@@ -44,7 +40,7 @@ public class JustJoinItClient {
                 .retrieve()
                 .body(String.class);
 
-        JsonNode jsonNode = htmlCleaner.cleanHtml(objectMapper.readTree(json));
+        JsonNode jsonNode = objectMapper.readTree(json);
         return objectMapper.treeToValue(jsonNode, JustJoinItJobDetails.class);
     }
 

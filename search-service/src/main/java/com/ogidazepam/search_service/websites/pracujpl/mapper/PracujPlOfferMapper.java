@@ -2,6 +2,7 @@ package com.ogidazepam.search_service.websites.pracujpl.mapper;
 
 import com.ogidazepam.search_service.mapper.JobOfferMapper;
 import com.ogidazepam.search_service.model.JobOffer;
+import com.ogidazepam.search_service.utils.HtmlCleaner;
 import com.ogidazepam.search_service.websites.pracujpl.model.offer.*;
 import org.springframework.stereotype.Component;
 
@@ -24,8 +25,8 @@ public class PracujPlOfferMapper implements JobOfferMapper<PracujPlOfferData> {
                 .url(attributes.offerAbsoluteUrl())
                 .jobTitle(attributes.jobTitle())
                 .companyName(attributes.displayEmployerName())
-                .jobDescription(mapJobDescription(textSections))
-                .requirements(mapJobRequirements(textSections))
+                .jobDescription(HtmlCleaner.cleanHtml(mapJobDescription(textSections)))
+                .requirements(HtmlCleaner.cleanHtml(mapJobRequirements(textSections)))
                 .employmentType(mapJobEmploymentTypes(employment.workSchedules()))
                 .workModes(mapJobWorkModes(employment.workModes()))
                 .experienceLevel(mapExperienceLevel(employment.positionLevels()))

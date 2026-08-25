@@ -3,11 +3,13 @@ package com.ogidazepam.job_api_service.auth.filter;
 import com.ogidazepam.job_api_service.auth.service.JwtService;
 import com.ogidazepam.job_api_service.auth.util.CustomUserDetails;
 import com.ogidazepam.job_api_service.auth.util.CustomUserDetailsService;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Arrays;
 
+@Slf4j
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -34,19 +37,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String jwt = extractJwtFromCookie(request);
 
         if (jwt != null && SecurityContextHolder.getContext().getAuthentication() == null){
-            String username = jwtService.extractUsername(jwt);
+            try {
+                String username = jwtService.extractUsername(jwt);
 
-            if (username != null && jwtService.isTokenValid(jwt)){
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                if (username != null && jwtService.isTokenValid(jwt)){
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                    UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                }
+            } catch (JwtException | IllegalArgumentException e){
+                log.debug("Invalid JWT token: {}", e.getMessage());
+                // Let request proceed unauthenticated so SecurityFilterChain handles 401
             }
+
         }
 
         filterChain.doFilter(request, response);

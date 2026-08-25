@@ -9,7 +9,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -47,7 +46,7 @@ public class KafkaConsumerListener {
         }
 
         if(event.type() == JobOfferEvent.EventType.OFFER){
-            List<JobOffer> taskBuffer = buffers.computeIfAbsent(taskId, k -> new ArrayList<>());
+            List<JobOffer> taskBuffer = buffers.computeIfAbsent(taskId, k -> Collections.synchronizedList(new ArrayList<>()));
 
             String cacheKey = "analyzed_offer:" + event.customerId() + ":" + event.offer().url();
             OfferResult cachedOfferResult = offerResultRedisTemplate.opsForValue().get(cacheKey);
@@ -76,7 +75,7 @@ public class KafkaConsumerListener {
 
             try {
                 analyzerService.analyze(event, batchToSend);
-            } catch (IllegalArgumentException e){
+            } catch (Exception e){
                 failedTasks.add(event.taskId());
                 buffers.remove(event.taskId());
                 kafkaProducerService.sendToKafka(

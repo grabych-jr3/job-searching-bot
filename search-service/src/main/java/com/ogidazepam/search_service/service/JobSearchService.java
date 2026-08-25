@@ -3,10 +3,12 @@ package com.ogidazepam.search_service.service;
 import com.ogidazepam.search_service.model.event.CreatedTaskEvent;
 import com.ogidazepam.search_service.model.event.JobOfferEvent;
 import com.ogidazepam.search_service.strategy.JobSearcher;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class JobSearchService {
 
@@ -19,19 +21,27 @@ public class JobSearchService {
     }
 
     public void searchAll(CreatedTaskEvent event){
-        for (JobSearcher jobSearcher : jobSearchers){
-            jobSearcher.search(
-                    event,
-                    offer -> kafkaProducerService.sendToKafka(
-                            "found-offers-topic",
-                            event.taskId(),
-                            JobOfferEvent.offer(event.taskId(), event.customerId(), offer)
-                    ));
+        try {
+            for (JobSearcher jobSearcher : jobSearchers){
+                try {
+                    jobSearcher.search(
+                            event,
+                            offer -> kafkaProducerService.sendToKafka(
+                                    "found-offers-topic",
+                                    event.taskId(),
+                                    JobOfferEvent.offer(event.taskId(), event.customerId(), offer)
+                            ));
+                } catch (Exception e){
+                    log.error("Scraper {} failed for task {}", jobSearcher.getClass().getSimpleName(), event.taskId(), e);
+                }
+
+            }
+        } finally {
+            kafkaProducerService.sendToKafka(
+                    "found-offers-topic",
+                    event.taskId(),
+                    JobOfferEvent.finishedOffer(event.taskId(), event.customerId())
+            );
         }
-        kafkaProducerService.sendToKafka(
-                "found-offers-topic",
-                event.taskId(),
-                JobOfferEvent.finishedOffer(event.taskId(), event.customerId())
-        );
     }
 }

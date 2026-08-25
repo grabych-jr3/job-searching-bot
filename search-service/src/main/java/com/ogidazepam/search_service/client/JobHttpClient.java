@@ -1,6 +1,5 @@
 package com.ogidazepam.search_service.client;
 
-import com.ogidazepam.search_service.utils.HtmlCleaner;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -18,11 +17,9 @@ public class JobHttpClient {
     private static final int MAX_ATTEMPTS = 5;
     private static final long INITIAL_DELAY = 1000;
 
-    private final HtmlCleaner htmlCleaner;
     private final ObjectMapper objectMapper;
 
-    public JobHttpClient(HtmlCleaner htmlCleaner, ObjectMapper objectMapper) {
-        this.htmlCleaner = htmlCleaner;
+    public JobHttpClient(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
@@ -56,8 +53,7 @@ public class JobHttpClient {
             throw new IllegalStateException("__NEXT_DATA__ not found");
         }
 
-        JsonNode jsonNode = objectMapper.readValue(element.data(), JsonNode.class);
-        return htmlCleaner.cleanHtml(jsonNode);
+        return objectMapper.readValue(element.data(), JsonNode.class);
     }
 
     private void sleep(long delay){

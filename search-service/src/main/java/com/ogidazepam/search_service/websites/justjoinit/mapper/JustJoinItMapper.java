@@ -1,5 +1,6 @@
 package com.ogidazepam.search_service.websites.justjoinit.mapper;
 
+import com.ogidazepam.search_service.utils.HtmlCleaner;
 import com.ogidazepam.search_service.websites.justjoinit.model.*;
 import com.ogidazepam.search_service.mapper.JobOfferMapper;
 import com.ogidazepam.search_service.model.JobOffer;
@@ -24,7 +25,7 @@ public class JustJoinItMapper implements JobOfferMapper<JustJoinItJobData> {
                 .url(JOB_URL + jobOffer.slug())
                 .jobTitle(jobOffer.title())
                 .companyName(jobOffer.companyName())
-                .jobDescription(jobDetails.body())
+                .jobDescription(HtmlCleaner.cleanHtml(jobDetails.body()))
                 .employmentType(List.of(jobOffer.workingTime()))
                 .workModes(List.of(jobOffer.workplaceType()))
                 .experienceLevel(List.of(jobOffer.experienceLevel()))

@@ -1,5 +1,6 @@
 package com.ogidazepam.search_service.websites.bulldogJob.mapper;
 
+import com.ogidazepam.search_service.utils.HtmlCleaner;
 import com.ogidazepam.search_service.websites.bulldogJob.model.BulldogJobMetaData;
 import com.ogidazepam.search_service.websites.bulldogJob.model.BulldogJobNextData;
 import com.ogidazepam.search_service.websites.bulldogJob.model.BulldogJobOffer;
@@ -25,8 +26,8 @@ public class BulldogJobMapper implements JobOfferMapper<BulldogJobNextData> {
                 .url(metaData.canonicalUrl())
                 .jobTitle(metaData.title())
                 .companyName(job.company().name())
-                .jobDescription(job.details())
-                .requirements(job.requirements())
+                .jobDescription(HtmlCleaner.cleanHtml(job.details()))
+                .requirements(HtmlCleaner.cleanHtml(job.requirements()))
                 .employmentType(List.of(job.employmentType()))
                 .workModes(job.workModes())
                 .experienceLevel(List.of(job.experienceLevel()))
