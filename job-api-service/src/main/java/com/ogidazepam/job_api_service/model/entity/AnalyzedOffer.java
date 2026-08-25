@@ -1,6 +1,5 @@
 package com.ogidazepam.job_api_service.model.entity;
 
-import com.ogidazepam.job_api_service.auth.model.entity.Customer;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

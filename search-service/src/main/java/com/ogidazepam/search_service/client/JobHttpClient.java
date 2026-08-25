@@ -26,7 +26,6 @@ public class JobHttpClient {
         this.objectMapper = objectMapper;
     }
 
-
     public JsonNode extractNextDataWithRetry(String url){
         for (int i = 1; i <= MAX_ATTEMPTS; i++) {
             try {

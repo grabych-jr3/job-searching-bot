@@ -14,8 +14,9 @@ public class KafkaProducerService<T> {
 
     public void sendToKafka(
             String topic,
+            String key,
             T event
     ){
-        kafkaTemplate.send(topic, event);
+        kafkaTemplate.send(topic, key, event);
     }
 }

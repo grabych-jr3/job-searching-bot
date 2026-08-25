@@ -19,7 +19,6 @@ import java.util.List;
 public class BulldogJobClient {
 
     private static final String JOB_URL = "https://bulldogjob.pl/companies/jobs/";
-    private static final String SOURCE = "BulldogJob";
 
     private final ObjectMapper objectMapper;
     private final JobHttpClient jobHttpClient;

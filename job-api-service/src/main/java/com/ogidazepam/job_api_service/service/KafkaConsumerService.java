@@ -19,11 +19,13 @@ public class KafkaConsumerService {
     public void consumeCompletedOffers(AnalyzedOfferEvent event){
         String taskId = event.taskId();
 
-        if (event.type() == AnalyzedOfferEvent.EventType.OFFER){
-            sseNotificationService.sendOffer(taskId, event.offerResult());
-            analyzedOfferService.saveAnalyzedOffer(event);
-        }else {
-            sseNotificationService.sendCompletion(taskId);
+        switch (event.type()) {
+            case OFFER -> {
+                sseNotificationService.sendOffer(taskId, event.offerResult());
+                analyzedOfferService.saveAnalyzedOffer(event);
+            }
+            case ANALYSIS_FINISHED -> sseNotificationService.sendCompletion(taskId);
+            case ANALYSIS_FAILED -> sseNotificationService.sendFailure(taskId, event.errorMessage());
         }
     }
 }

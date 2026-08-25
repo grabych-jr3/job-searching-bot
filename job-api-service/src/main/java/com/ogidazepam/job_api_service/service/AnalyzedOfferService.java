@@ -39,16 +39,4 @@ public class AnalyzedOfferService {
                 offerResult.score()
         );
     }
-
-    private AnalyzedOffer toAnalyzedOffer(AnalyzedOfferEvent offerEvent){
-        OfferResult offerResult = offerEvent.offerResult();
-
-        return AnalyzedOffer.builder()
-                .offerUrl(offerResult.url())
-                .jobTitle(offerResult.jobTitle())
-                .score(offerResult.score())
-                .reason(offerResult.reason())
-                .customerId(offerEvent.customerId())
-                .build();
-    }
 }

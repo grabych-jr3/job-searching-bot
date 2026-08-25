@@ -74,12 +74,17 @@
                     </div>
                 </fieldset>
 
-                <label class="file-picker" for="fileInput">
-                    <span class="file-picker-label">Choose file</span>
-                    <input id="fileInput" type="file" name="file" required>
+                <label class="file-picker" for="fileInput" id="filePickerLabel">
+                    <span class="file-picker-label" id="filePickerText">Choose PDF resume (Max 5MB)</span>
+                    <span class="file-picker-subtext">Click to browse or drag and drop your PDF</span>
+                    <input id="fileInput" type="file" name="file" accept=".pdf,application/pdf" required>
                 </label>
+                <div id="selectedFileInfo" class="selected-file-info" style="display: none;">
+                    <span id="fileNameDisplay" class="file-name-text"></span>
+                    <button type="button" id="clearFileBtn" class="clear-file-btn" title="Remove file">&times;</button>
+                </div>
 
-                <button type="submit" id="submitBtn">Send</button>
+                <button type="submit" id="submitBtn">Start Analysis</button>
             </form>
 
             <div id="status" class="status" aria-live="polite">No file selected.</div>

@@ -31,6 +31,11 @@ checkAuth();
 
 const form = document.getElementById('uploadForm');
 const fileInput = document.getElementById('fileInput');
+const filePickerLabel = document.getElementById('filePickerLabel');
+const filePickerText = document.getElementById('filePickerText');
+const selectedFileInfo = document.getElementById('selectedFileInfo');
+const fileNameDisplay = document.getElementById('fileNameDisplay');
+const clearFileBtn = document.getElementById('clearFileBtn');
 const statusEl = document.getElementById('status');
 const resultsContainer = document.getElementById('resultsContainer');
 const submitBtn = document.getElementById('submitBtn');
@@ -39,6 +44,8 @@ const filterButtons = document.querySelectorAll('.filter-btn');
 const technologyOptions = document.querySelectorAll('input[name="technology"]');
 const experienceOptions = document.querySelectorAll('input[name="experience"]');
 const workModeOptions = document.querySelectorAll('input[name="workMode"]');
+
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 let taskStream = null;
 let offerResults = [];
@@ -209,18 +216,166 @@ filterButtons.forEach((button) => {
     });
 });
 
+function showStatus(message, type = 'normal') {
+    statusEl.textContent = message;
+    statusEl.className = 'status';
+    if (type !== 'normal') {
+        statusEl.classList.add(type);
+    }
+}
+
+function formatFileSize(bytes) {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function resetFileInput() {
+    fileInput.value = '';
+    if (selectedFileInfo) selectedFileInfo.style.display = 'none';
+    if (filePickerText) filePickerText.textContent = 'Choose PDF resume (Max 5MB)';
+    showStatus('No file selected.');
+}
+
+function validateSelectedFile(file) {
+    if (!file) {
+        resetFileInput();
+        return false;
+    }
+
+    // 1. Validate file extension & MIME type
+    const fileName = file.name || '';
+    const isPdfExtension = fileName.toLowerCase().endsWith('.pdf');
+    const isPdfMime = file.type === 'application/pdf' || file.type === '';
+
+    if (!isPdfExtension || (!isPdfMime && file.type)) {
+        showStatus('Only PDF files (.pdf) are supported. Please select a valid document.', 'error');
+        resetFileInput();
+        return false;
+    }
+
+    // 2. Validate file size
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+        showStatus(`File size (${formatFileSize(file.size)}) exceeds the 5MB limit. Please upload a smaller PDF.`, 'error');
+        resetFileInput();
+        return false;
+    }
+
+    // Valid file selected
+    if (selectedFileInfo && fileNameDisplay) {
+        fileNameDisplay.textContent = `${fileName} (${formatFileSize(file.size)})`;
+        selectedFileInfo.style.display = 'flex';
+    }
+    if (filePickerText) {
+        filePickerText.textContent = 'Change PDF file';
+    }
+    showStatus(`Selected: ${fileName} (${formatFileSize(file.size)})`, 'success');
+    return true;
+}
+
+if (fileInput) {
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files && fileInput.files[0]) {
+            validateSelectedFile(fileInput.files[0]);
+        }
+    });
+}
+
+if (clearFileBtn) {
+    clearFileBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        resetFileInput();
+    });
+}
+
+if (filePickerLabel) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+        filePickerLabel.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            filePickerLabel.classList.add('dragover');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        filePickerLabel.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            filePickerLabel.classList.remove('dragover');
+        });
+    });
+
+    filePickerLabel.addEventListener('drop', (e) => {
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+            fileInput.files = e.dataTransfer.files;
+            validateSelectedFile(e.dataTransfer.files[0]);
+        }
+    });
+}
+
+function renderErrorState(errorMessage, customTips = null) {
+    resultsContainer.innerHTML = '';
+
+    const errorCard = document.createElement('div');
+    errorCard.className = 'empty-state error-state';
+
+    const header = document.createElement('div');
+    header.className = 'error-state-header';
+    header.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>Analysis Could Not Be Completed</span>
+    `;
+
+    const msg = document.createElement('p');
+    msg.className = 'error-state-message';
+    msg.textContent = errorMessage || 'The uploaded file could not be analyzed.';
+
+    const tipsContainer = document.createElement('div');
+    tipsContainer.innerHTML = '<strong style="display: block; margin-bottom: 6px; font-size: 0.92rem; color: #374151;">Common reasons & solutions:</strong>';
+
+    const tipsList = document.createElement('ul');
+    tipsList.className = 'error-state-tips';
+
+    const defaultTips = customTips || [
+        'The PDF contains only scanned images without selectable text (OCR is required for images).',
+        'The PDF is password-protected or encrypted.',
+        'The document is corrupted or not a valid PDF file.',
+        'Please export your CV as a clean PDF (e.g. from Word, Google Docs, or Canva) and try again.'
+    ];
+
+    defaultTips.forEach(tip => {
+        const li = document.createElement('li');
+        li.textContent = tip;
+        tipsList.appendChild(li);
+    });
+
+    tipsContainer.appendChild(tipsList);
+
+    errorCard.appendChild(header);
+    errorCard.appendChild(msg);
+    errorCard.appendChild(tipsContainer);
+
+    resultsContainer.appendChild(errorCard);
+}
+
 function openTaskStream(taskId) {
     closeTaskStream();
     clearResults();
 
     const streamUrl = `${API_BASE_URL}/api/tasks/${taskId}/stream`;
-    statusEl.textContent = `Listening for vacancy results for task ${taskId}...`;
-    resultsContainer.innerHTML = '<div class="empty-state">Analyzing vacancies, please wait...</div>';
+    showStatus(`Analyzing vacancies with your CV (Task ID: ${taskId})...`, 'loading');
+    resultsContainer.innerHTML = '<div class="empty-state">Analyzing vacancies and matching skills, please wait...</div>';
 
     taskStream = new EventSource(streamUrl, { withCredentials: true });
 
     taskStream.onopen = () => {
-        statusEl.textContent = `Connected to task stream for ${taskId}.`;
+        showStatus(`Connected! Processing vacancies for task ${taskId}...`, 'loading');
     };
 
     taskStream.addEventListener('vacancy_analyzed', (event) => {
@@ -229,14 +384,36 @@ function openTaskStream(taskId) {
 
     taskStream.addEventListener('task_completed', (event) => {
         const completionValue = parseStreamMessage(event.data);
-        statusEl.textContent = completionValue === 'FINISHED'
-            ? `Task ${taskId} completed.`
-            : `Task ${taskId} finished.`;
+        showStatus(
+            completionValue === 'FINISHED'
+                ? `Task ${taskId} completed.`
+                : `Task ${taskId} finished.`,
+            'success'
+        );
         closeTaskStream();
 
         if (offerResults.length === 0) {
-            resultsContainer.innerHTML = '<div class="empty-state">No offers by this request or nothing new</div>';
+            resultsContainer.innerHTML = '<div class="empty-state">No matching job offers found for this criteria.</div>';
         }
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Start Analysis';
+    });
+
+    taskStream.addEventListener('task_failed', (event) => {
+        const raw = event.data;
+        let errorMsg = raw;
+        try {
+            const parsed = JSON.parse(raw);
+            errorMsg = parsed.message || parsed.errorMessage || raw;
+        } catch {
+            errorMsg = raw;
+        }
+
+        showStatus(`Analysis failed: ${errorMsg}`, 'error');
+        renderErrorState(errorMsg);
+        closeTaskStream();
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Start Analysis';
     });
 
     taskStream.onmessage = (event) => {
@@ -244,12 +421,18 @@ function openTaskStream(taskId) {
     };
 
     taskStream.onerror = () => {
-        statusEl.textContent = `Connection to task ${taskId} stream failed.`;
+        // If stream closed after receiving results or task failure, don't overwrite if error already shown
+        if (taskStream && taskStream.readyState === EventSource.CLOSED) {
+            return;
+        }
+        showStatus(`Connection to task stream closed or interrupted.`, 'error');
         closeTaskStream();
 
         if (offerResults.length === 0) {
-            resultsContainer.innerHTML = '<div class="empty-state">No offers by this request or nothing new</div>';
+            renderErrorState('The connection to the analysis server was closed unexpectedly. Please check your connection and try again.');
         }
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Start Analysis';
     };
 }
 
@@ -265,7 +448,7 @@ function buildAnalyzeRequestParams() {
     const workModes = getSelectedValues('input[name="workMode"]');
 
     if (!technology) {
-        throw new Error('Please select a technology before sending the file.');
+        throw new Error('Please select a technology before starting analysis.');
     }
 
     if (experiences.length === 0) {
@@ -300,8 +483,7 @@ form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const file = fileInput.files[0];
-    if (!file) {
-        statusEl.textContent = 'Please select a file before sending.';
+    if (!validateSelectedFile(file)) {
         return;
     }
 
@@ -309,8 +491,8 @@ form.addEventListener('submit', async (event) => {
     formData.append('file', file);
 
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Sending...';
-    statusEl.textContent = 'Uploading file...';
+    submitBtn.textContent = 'Uploading & Starting...';
+    showStatus('Uploading resume and starting search...', 'loading');
     clearResults();
 
     try {
@@ -326,7 +508,7 @@ form.addEventListener('submit', async (event) => {
         });
 
         if (response.status === 401 || response.status === 403) {
-            statusEl.textContent = 'Session expired or unauthenticated. Redirecting to login...';
+            showStatus('Session expired or unauthenticated. Redirecting to login...', 'error');
             setTimeout(() => {
                 window.location.href = '../auth/login.html?expired=true';
             }, 800);
@@ -334,7 +516,13 @@ form.addEventListener('submit', async (event) => {
         }
 
         if (!response.ok) {
-            const errorText = await response.text();
+            let errorText = await response.text();
+            try {
+                const parsedJson = JSON.parse(errorText);
+                errorText = parsedJson.message || parsedJson.error || errorText;
+            } catch {
+                // errorText is already plain text
+            }
             throw new Error(errorText || `Request failed with status ${response.status}`);
         }
 
@@ -342,16 +530,16 @@ form.addEventListener('submit', async (event) => {
         const taskId = responseData?.taskId;
 
         if (!taskId) {
-            throw new Error('The server response did not include a taskId.');
+            throw new Error('The server response did not include a valid taskId.');
         }
 
         openTaskStream(taskId);
     } catch (error) {
-        console.error(error);
-        statusEl.textContent = error.message || 'The upload failed.';
-        resultsContainer.innerHTML = `<div class="empty-state">${error.message || 'The upload failed.'}</div>`;
-    } finally {
+        console.error('Submission error:', error);
+        const errorMsg = error.message || 'The upload or analysis request failed.';
+        showStatus(errorMsg, 'error');
+        renderErrorState(errorMsg);
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Send';
+        submitBtn.textContent = 'Start Analysis';
     }
 });

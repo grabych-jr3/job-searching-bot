@@ -9,16 +9,16 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class KafkaConsumerListener {
 
-    private static final int BUFFER_MAX_SIZE = 20;
+    private static final int BUFFER_MAX_SIZE = 10;
     private final Map<String, List<JobOffer>> buffers = new ConcurrentHashMap<>();
+    private final Set<String> failedTasks = ConcurrentHashMap.newKeySet();
 
     private final AiAnalyzerService analyzerService;
     private final RedisTemplate<String, byte[]> redisTemplate;
@@ -38,6 +38,14 @@ public class KafkaConsumerListener {
     public void consume(JobOfferEvent event){
         String taskId = event.taskId();
 
+        if (failedTasks.contains(taskId)){
+            if (event.type() == JobOfferEvent.EventType.SEARCH_FINISHED){
+                failedTasks.remove(taskId);
+                cleanup(taskId);
+            }
+            return;
+        }
+
         if(event.type() == JobOfferEvent.EventType.OFFER){
             List<JobOffer> taskBuffer = buffers.computeIfAbsent(taskId, k -> new ArrayList<>());
 
@@ -53,9 +61,10 @@ public class KafkaConsumerListener {
         } else{
             flushBuffer(event);
             buffers.remove(taskId);
-            kafkaProducerService.sendToKafka("completed-offer-topic", AnalyzedOfferEvent.finished(taskId, event.customerId()));
-            redisTemplate.delete("cv:" + taskId);
-            candidateProfileRedisTemplate.delete("analyzed:cv:" + taskId);
+            if (!failedTasks.contains(taskId)){
+                kafkaProducerService.sendToKafka("completed-offer-topic", event.taskId(), AnalyzedOfferEvent.finished(taskId, event.customerId()));
+            }
+            cleanup(taskId);
         }
     }
 
@@ -65,8 +74,24 @@ public class KafkaConsumerListener {
         if (taskBuffer != null && !taskBuffer.isEmpty()){
             List<JobOffer> batchToSend = new ArrayList<>(taskBuffer);
 
-            analyzerService.analyze(event, batchToSend);
+            try {
+                analyzerService.analyze(event, batchToSend);
+            } catch (IllegalArgumentException e){
+                failedTasks.add(event.taskId());
+                buffers.remove(event.taskId());
+                kafkaProducerService.sendToKafka(
+                        "completed-offer-topic",
+                        event.taskId(),
+                        AnalyzedOfferEvent.failed(event.taskId(), event.customerId(), e.getMessage())
+                );
+            }
+
             taskBuffer.clear();
         }
+    }
+
+    private void cleanup(String taskId){
+        redisTemplate.delete("cv:" + taskId);
+        candidateProfileRedisTemplate.delete("analyzed:cv:" + taskId);
     }
 }

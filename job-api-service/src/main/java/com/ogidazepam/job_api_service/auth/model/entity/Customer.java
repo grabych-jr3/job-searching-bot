@@ -29,7 +29,9 @@ public class Customer {
     @Column(nullable = false)
     private String password;
 
+    @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(value = EnumType.STRING)
+    @CollectionTable(name = "customer_roles", joinColumns = @JoinColumn(name = "customer_id"))
     private List<CustomerRole> roles;
 
     @CreationTimestamp

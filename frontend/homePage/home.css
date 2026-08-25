@@ -203,25 +203,73 @@ h1 {
     padding: 20px 16px;
     background: #f7f9ff;
     cursor: pointer;
-    transition: border-color 0.2s ease, transform 0.2s ease;
+    text-align: center;
+    transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
 }
 
 .file-picker:hover {
     border-color: var(--primary-dark);
+    background: #f0f4ff;
     transform: translateY(-1px);
 }
 
+.file-picker.dragover {
+    border-color: var(--primary-dark);
+    background: #e5edff;
+}
+
 .file-picker input {
-    display: block;
-    width: 100%;
-    margin-top: 12px;
-    color: var(--muted);
+    display: none;
 }
 
 .file-picker-label {
-    display: inline-block;
+    display: block;
     font-weight: 700;
+    font-size: 1rem;
     color: var(--primary);
+    margin-bottom: 4px;
+}
+
+.file-picker-subtext {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--muted);
+}
+
+.selected-file-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #eef3ff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-top: -6px;
+}
+
+.file-name-text {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.clear-file-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 1.3rem;
+    line-height: 1;
+    padding: 0 4px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: color 0.2s ease;
+}
+
+.clear-file-btn:hover {
+    color: var(--error);
 }
 
 button {
@@ -251,6 +299,30 @@ button:disabled {
     min-height: 24px;
     font-size: 0.95rem;
     color: var(--muted);
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.status.error {
+    background: #fdf2f2;
+    border: 1px solid #fca5a5;
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+.status.loading {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    font-weight: 600;
+}
+
+.status.success {
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    color: #15803d;
+    font-weight: 600;
 }
 
 .results-panel {
@@ -315,12 +387,58 @@ button:disabled {
 
 .empty-state {
     grid-column: 1 / -1;
-    padding: 18px 16px;
-    border-radius: 12px;
+    padding: 24px 20px;
+    border-radius: 14px;
     background: #f6f8ff;
     border: 1px dashed var(--border);
     color: var(--muted);
     text-align: center;
+    line-height: 1.6;
+}
+
+.empty-state.error-state {
+    background: #fff5f5;
+    border: 1px solid #fca5a5;
+    color: #7f1d1d;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 24px;
+}
+
+.error-state-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #b91c1c;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.error-state-header svg {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.error-state-message {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #991b1b;
+    margin: 0;
+}
+
+.error-state-tips {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 0.9rem;
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.error-state-tips li {
+    margin-bottom: 4px;
 }
 
 .offer-card {

@@ -57,4 +57,23 @@ public class SSENotificationService {
             }
         }
     }
+
+    public void sendFailure(String taskId, String errorMessage){
+        SseEmitter emitter = emitters.get(taskId);
+        if (emitter != null){
+            try {
+                emitter.send(SseEmitter.event()
+                        .name("task_failed")
+                        .data(errorMessage != null ? errorMessage : "Analysis failed")
+                        .build()
+                );
+
+                emitter.complete();
+            } catch (Exception ignored){
+
+            } finally {
+                emitters.remove(taskId);
+            }
+        }
+    }
 }
