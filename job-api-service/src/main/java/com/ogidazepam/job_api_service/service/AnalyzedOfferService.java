@@ -34,6 +34,7 @@ public class AnalyzedOfferService {
         analyzedOfferRepository.insertIfNotExists(
                 offerEvent.customerId(),
                 offerResult.url(),
+                offerEvent.cvHash(),
                 offerResult.jobTitle(),
                 offerResult.reason(),
                 offerResult.score()

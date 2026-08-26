@@ -48,9 +48,11 @@ public class KafkaConsumerListener {
         if(event.type() == JobOfferEvent.EventType.OFFER){
             List<JobOffer> taskBuffer = buffers.computeIfAbsent(taskId, k -> Collections.synchronizedList(new ArrayList<>()));
 
-            String cacheKey = "analyzed_offer:" + event.customerId() + ":" + event.offer().url();
+            String cacheKey = "analyzed_offer:" + event.customerId() + ":" + event.cvHash() + ":" + event.offer().url();
             OfferResult cachedOfferResult = offerResultRedisTemplate.opsForValue().get(cacheKey);
-            if (cachedOfferResult == null){
+            if (cachedOfferResult != null){
+                kafkaProducerService.sendToKafka("completed-offer-topic", event.taskId(), AnalyzedOfferEvent.offerResult(taskId, event.customerId(), event.cvHash(), cachedOfferResult));
+            } else {
                 taskBuffer.add(event.offer());
 
                 if (taskBuffer.size() >= BUFFER_MAX_SIZE){

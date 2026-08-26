@@ -17,7 +17,7 @@ import java.time.OffsetDateTime;
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_customer_url",
-                        columnNames = {"customer_id", "offer_url"}
+                        columnNames = {"customer_id", "cvHash", "offer_url"}
                 )
         }
 )
@@ -34,12 +34,15 @@ public class AnalyzedOffer {
     private String offerUrl;
 
     @Column(nullable = false)
+    private String cvHash;
+
+    @Column(nullable = false)
     private String jobTitle;
 
     @Column(nullable = false)
     private int score;
 
-    @Column(nullable = false, length = 500)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String reason;
 
     @CreationTimestamp

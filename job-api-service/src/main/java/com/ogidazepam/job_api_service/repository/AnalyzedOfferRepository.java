@@ -34,13 +34,14 @@ public interface AnalyzedOfferRepository extends JpaRepository<AnalyzedOffer, Lo
 
     @Modifying
     @Query(value = """
-        INSERT INTO analyzed_offer (customer_id, offer_url, job_title, reason, score, analyzed_at)
-        VALUES (:customerId, :offerUrl, :jobTitle, :reason, :score, NOW())
-        ON CONFLICT (customer_id, offer_url) DO NOTHING
+        INSERT INTO analyzed_offer (customer_id, offer_url, cv_hash, job_title, reason, score, analyzed_at)
+        VALUES (:customerId, :offerUrl, :cvHash, :jobTitle, :reason, :score, NOW())
+        ON CONFLICT (customer_id, cv_hash, offer_url) DO NOTHING
     """, nativeQuery = true)
     int insertIfNotExists(
             @Param("customerId") Long customerId,
             @Param("offerUrl") String offerUrl,
+            @Param("cvHash") String cvHash,
             @Param("jobTitle") String jobTitle,
             @Param("reason") String reason,
             @Param("score") int score

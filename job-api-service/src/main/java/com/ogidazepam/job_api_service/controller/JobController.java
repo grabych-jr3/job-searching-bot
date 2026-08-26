@@ -43,7 +43,7 @@ public class JobController {
             @AuthenticationPrincipal CustomUserDetails userDetails
             ) throws IOException {
         fileValidator.validatePdf(file);
-        CreatedTaskEvent event = taskService.createTaskEvent(analyzeRequest, userDetails.getCustomerId());
+        CreatedTaskEvent event = taskService.createTaskEvent(analyzeRequest, userDetails.getCustomerId(), file.getBytes());
 
         bytesRedisTemplate.opsForValue().set("cv:" + event.taskId(), file.getBytes(), Duration.ofHours(1));
         kafkaProducerService.sendToKafka("search-jobs-topic", event.taskId(), event);

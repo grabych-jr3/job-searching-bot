@@ -29,7 +29,7 @@ public class JobSearchService {
                             offer -> kafkaProducerService.sendToKafka(
                                     "found-offers-topic",
                                     event.taskId(),
-                                    JobOfferEvent.offer(event.taskId(), event.customerId(), offer)
+                                    JobOfferEvent.offer(event.taskId(), event.customerId(), event.cvHash(), offer)
                             ));
                 } catch (Exception e){
                     log.error("Scraper {} failed for task {}", jobSearcher.getClass().getSimpleName(), event.taskId(), e);
@@ -40,7 +40,7 @@ public class JobSearchService {
             kafkaProducerService.sendToKafka(
                     "found-offers-topic",
                     event.taskId(),
-                    JobOfferEvent.finishedOffer(event.taskId(), event.customerId())
+                    JobOfferEvent.finishedOffer(event.taskId(), event.customerId(), event.cvHash())
             );
         }
     }
