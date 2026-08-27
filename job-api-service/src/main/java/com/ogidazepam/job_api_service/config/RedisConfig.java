@@ -1,8 +1,8 @@
 package com.ogidazepam.job_api_service.config;
 
 import com.ogidazepam.job_api_service.model.event.AnalyzedOfferEvent;
-import com.ogidazepam.job_api_service.util.RedisSsePublisher;
-import com.ogidazepam.job_api_service.util.RedisSseSubscriber;
+import com.ogidazepam.job_api_service.util.redis.RedisSsePublisher;
+import com.ogidazepam.job_api_service.util.redis.RedisSseSubscriber;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;

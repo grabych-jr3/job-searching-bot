@@ -6,6 +6,8 @@ import com.ogidazepam.search_service.websites.justjoinit.model.JustJoinItOffersR
 import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -14,8 +16,6 @@ import java.util.List;
 
 @Component
 public class JustJoinItClient {
-    private static final String JOBS_API_URL =
-            "https://justjoin.it/api/candidate-api/offers?categories=java&experienceLevels=junior&experienceLevels=intern&sortBy=publishedAt&orderBy=descending&from=0&itemsCount=100";
     private static final String JOB_API_URL = "https://justjoin.it/api/candidate-api/offers/";
 
     private final RestClient restClient;
@@ -27,7 +27,11 @@ public class JustJoinItClient {
     }
 
     @Retryable(
-            includes = HttpClientErrorException.TooManyRequests.class,
+            includes = {
+                    HttpClientErrorException.TooManyRequests.class,
+                    HttpServerErrorException.class,
+                    ResourceAccessException.class
+            },
             maxRetries = 5,
             delay = 1000,
             multiplier = 2,

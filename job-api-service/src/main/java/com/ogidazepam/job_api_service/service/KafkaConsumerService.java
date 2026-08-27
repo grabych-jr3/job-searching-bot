@@ -1,7 +1,7 @@
 package com.ogidazepam.job_api_service.service;
 
 import com.ogidazepam.job_api_service.model.event.AnalyzedOfferEvent;
-import com.ogidazepam.job_api_service.util.RedisSsePublisher;
+import com.ogidazepam.job_api_service.util.redis.RedisSsePublisher;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 

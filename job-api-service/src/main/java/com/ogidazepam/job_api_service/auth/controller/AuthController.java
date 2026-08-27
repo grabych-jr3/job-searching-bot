@@ -4,6 +4,7 @@ import com.ogidazepam.job_api_service.auth.model.dto.LoginRequest;
 import com.ogidazepam.job_api_service.auth.model.dto.SignUpRequest;
 import com.ogidazepam.job_api_service.auth.service.CustomerService;
 import com.ogidazepam.job_api_service.auth.util.CustomUserDetails;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -32,13 +33,13 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Void> register(@RequestBody SignUpRequest dto){
+    public ResponseEntity<Void> register(@RequestBody @Valid SignUpRequest dto){
         customerService.saveCustomer(dto);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Void> login(@RequestBody LoginRequest dto){
+    public ResponseEntity<Void> login(@RequestBody @Valid LoginRequest dto){
         String jwt = customerService.login(dto);
 
         ResponseCookie cookie = ResponseCookie.from("jwt", jwt)

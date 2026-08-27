@@ -38,7 +38,7 @@ public interface AnalyzedOfferRepository extends JpaRepository<AnalyzedOffer, Lo
         VALUES (:customerId, :offerUrl, :cvHash, :jobTitle, :reason, :score, NOW())
         ON CONFLICT (customer_id, cv_hash, offer_url) DO NOTHING
     """, nativeQuery = true)
-    int insertIfNotExists(
+    void insertIfNotExists(
             @Param("customerId") Long customerId,
             @Param("offerUrl") String offerUrl,
             @Param("cvHash") String cvHash,

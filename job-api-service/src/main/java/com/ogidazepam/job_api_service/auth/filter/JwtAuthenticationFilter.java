@@ -53,7 +53,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             } catch (JwtException | IllegalArgumentException e){
                 log.debug("Invalid JWT token: {}", e.getMessage());
-                // Let request proceed unauthenticated so SecurityFilterChain handles 401
             }
 
         }

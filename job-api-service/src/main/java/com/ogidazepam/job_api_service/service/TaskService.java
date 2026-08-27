@@ -33,7 +33,7 @@ public class TaskService {
 
             return HexFormat.of().formatHex(messageDigest.digest(bytes));
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Hashing algorithm wasn't found");
+            throw new IllegalStateException("SHA-256 algorithm must be supported by JVM", e);
         }
     }
 }

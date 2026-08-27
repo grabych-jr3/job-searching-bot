@@ -6,6 +6,7 @@ import com.ogidazepam.job_api_service.model.request.AnalyzeRequest;
 import com.ogidazepam.job_api_service.service.KafkaProducerService;
 import com.ogidazepam.job_api_service.service.TaskService;
 import com.ogidazepam.job_api_service.util.FileValidator;
+import jakarta.validation.Valid;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +39,7 @@ public class JobController {
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     public ResponseEntity<CreatedTaskEvent> analyzeOffers(
-            AnalyzeRequest analyzeRequest,
+            @Valid AnalyzeRequest analyzeRequest,
             @RequestPart("file")MultipartFile file,
             @AuthenticationPrincipal CustomUserDetails userDetails
             ) throws IOException {

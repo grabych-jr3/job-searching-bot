@@ -1,4 +1,4 @@
-package com.ogidazepam.job_api_service.util;
+package com.ogidazepam.job_api_service.util.redis;
 
 import com.ogidazepam.job_api_service.model.event.AnalyzedOfferEvent;
 import com.ogidazepam.job_api_service.service.SSENotificationService;

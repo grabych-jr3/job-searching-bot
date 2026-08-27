@@ -6,6 +6,7 @@ import com.ogidazepam.job_api_service.auth.model.entity.Customer;
 import com.ogidazepam.job_api_service.auth.model.enums.CustomerRole;
 import com.ogidazepam.job_api_service.auth.repository.CustomerRepository;
 import com.ogidazepam.job_api_service.auth.util.CustomUserDetails;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -32,6 +33,9 @@ public class CustomerService {
 
     @Transactional
     public void saveCustomer(SignUpRequest dto){
+        if (customerRepository.existsByEmail(dto.email())){
+            throw new DataIntegrityViolationException("This email was already registered");
+        }
         customerRepository.save(toCustomer(dto));
     }
 

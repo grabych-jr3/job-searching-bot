@@ -26,9 +26,9 @@ public class JustJoinItMapper implements JobOfferMapper<JustJoinItJobData> {
                 .jobTitle(jobOffer.title())
                 .companyName(jobOffer.companyName())
                 .jobDescription(HtmlCleaner.cleanHtml(jobDetails.body()))
-                .employmentType(List.of(jobOffer.workingTime()))
-                .workModes(List.of(jobOffer.workplaceType()))
-                .experienceLevel(List.of(jobOffer.experienceLevel()))
+                .employmentType(wrapNullableToList(jobOffer.workingTime()))
+                .workModes(wrapNullableToList(jobOffer.workplaceType()))
+                .experienceLevel(wrapNullableToList(jobOffer.experienceLevel()))
                 .requiredSkills(mapRequiredSkills(jobOffer.requiredSkills()))
                 .niceToHaveSkills(mapNiceToHaveSkills(jobOffer.niceToHaveSkills()))
                 .cities(mapCities(jobOffer.locations()))
@@ -36,6 +36,10 @@ public class JustJoinItMapper implements JobOfferMapper<JustJoinItJobData> {
     }
 
     private List<String> mapRequiredSkills(List<JustJoinItJobRequiredSkill> requiredSkills){
+        if (requiredSkills == null){
+            return List.of();
+        }
+
         return requiredSkills
                 .stream()
                 .map(JustJoinItJobRequiredSkill::name)
@@ -43,6 +47,10 @@ public class JustJoinItMapper implements JobOfferMapper<JustJoinItJobData> {
     }
 
     private List<String> mapNiceToHaveSkills(List<JustJoinItJobNiceToHaveSkill> niceToHaveSkills){
+        if (niceToHaveSkills == null){
+            return List.of();
+        }
+
         return niceToHaveSkills
                 .stream()
                 .map(JustJoinItJobNiceToHaveSkill::name)
@@ -50,6 +58,10 @@ public class JustJoinItMapper implements JobOfferMapper<JustJoinItJobData> {
     }
 
     private List<String> mapCities(List<JustJoinItJobLocation> locations){
+        if (locations == null){
+            return List.of();
+        }
+
         return locations
                 .stream()
                 .map(JustJoinItJobLocation::city)

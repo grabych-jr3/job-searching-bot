@@ -28,15 +28,19 @@ public class BulldogJobMapper implements JobOfferMapper<BulldogJobNextData> {
                 .companyName(job.company().name())
                 .jobDescription(HtmlCleaner.cleanHtml(job.details()))
                 .requirements(HtmlCleaner.cleanHtml(job.requirements()))
-                .employmentType(List.of(job.employmentType()))
+                .employmentType(wrapNullableToList(job.employmentType()))
                 .workModes(job.workModes())
-                .experienceLevel(List.of(job.experienceLevel()))
+                .experienceLevel(wrapNullableToList(job.experienceLevel()))
                 .requiredSkills(job.technologyTags())
                 .cities(mapCities(job.locations()))
                 .build();
     }
 
     private List<String> mapCities(List<BulldogJobJobLocation> jobJobLocations){
+        if (jobJobLocations == null) {
+            return List.of();
+        }
+
         return jobJobLocations.stream()
                 .map(j -> j.location().cityEn())
                 .toList();

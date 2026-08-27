@@ -53,6 +53,10 @@ public class PracujPlOfferMapper implements JobOfferMapper<PracujPlOfferData> {
     }
 
     private List<String> mapJobRequiredSkills(List<PracujPlOfferTextSection> textSections){
+        if (textSections == null){
+            return List.of();
+        }
+
         return textSections.stream()
                 .filter(s -> s.sectionType().equals("technologies-expected"))
                 .flatMap(s -> s.textElements().stream())
@@ -60,6 +64,10 @@ public class PracujPlOfferMapper implements JobOfferMapper<PracujPlOfferData> {
     }
 
     private List<String> mapJobOptionalSkills(List<PracujPlOfferTextSection> textSections){
+        if(textSections == null){
+            return List.of();
+        }
+
         return textSections.stream()
                 .filter(s -> s.sectionType().equals("technologies-optional"))
                 .flatMap(s -> s.textElements().stream())
@@ -67,24 +75,40 @@ public class PracujPlOfferMapper implements JobOfferMapper<PracujPlOfferData> {
     }
 
     private List<String> mapJobWorkModes(List<PracujPlOfferWorkMode> workModes){
+        if (workModes == null){
+            return List.of();
+        }
+
         return workModes.stream()
                 .map(PracujPlOfferWorkMode::name)
                 .toList();
     }
 
     private List<String> mapJobEmploymentTypes(List<PracujPlOfferWorkSchedule> workSchedules){
+        if (workSchedules == null){
+            return List.of();
+        }
+
         return workSchedules.stream()
                 .map(PracujPlOfferWorkSchedule::name)
                 .toList();
     }
 
     private List<String> mapExperienceLevel(List<PracujPlOfferPositionLevel> positionLevels){
+        if (positionLevels == null){
+            return List.of();
+        }
+
         return positionLevels.stream()
                 .map(PracujPlOfferPositionLevel::name)
                 .toList();
     }
 
     private List<String> mapJobCities(List<PracujPlOfferWorkplace> workplaces){
+        if (workplaces == null){
+            return List.of();
+        }
+
         return workplaces.stream()
                 .map(w -> w.inlandLocation().location().name())
                 .toList();
