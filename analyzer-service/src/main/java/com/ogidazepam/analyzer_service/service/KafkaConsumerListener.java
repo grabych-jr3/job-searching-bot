@@ -1,10 +1,13 @@
 package com.ogidazepam.analyzer_service.service;
 
+import com.ogidazepam.analyzer_service.exception.AiAnalysisException;
+import com.ogidazepam.analyzer_service.exception.ResumeProcessingException;
 import com.ogidazepam.analyzer_service.model.OfferResult;
 import com.ogidazepam.analyzer_service.model.candidate.CandidateProfile;
 import com.ogidazepam.analyzer_service.model.event.AnalyzedOfferEvent;
 import com.ogidazepam.analyzer_service.model.event.JobOfferEvent;
 import com.ogidazepam.analyzer_service.model.offer.JobOffer;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -12,6 +15,7 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Component
 public class KafkaConsumerListener {
 
@@ -74,10 +78,12 @@ public class KafkaConsumerListener {
 
         if (taskBuffer != null && !taskBuffer.isEmpty()){
             List<JobOffer> batchToSend = new ArrayList<>(taskBuffer);
+            taskBuffer.clear();
 
             try {
                 analyzerService.analyze(event, batchToSend);
-            } catch (Exception e){
+            } catch (ResumeProcessingException e){
+                log.error("Fatal CV parsing error for task {}: {}", event.taskId(), e.getMessage());
                 failedTasks.add(event.taskId());
                 buffers.remove(event.taskId());
                 kafkaProducerService.sendToKafka(
@@ -85,9 +91,12 @@ public class KafkaConsumerListener {
                         event.taskId(),
                         AnalyzedOfferEvent.failed(event.taskId(), event.customerId(), e.getMessage())
                 );
+            } catch (AiAnalysisException e){
+                log.error("Failed to analyze a batch of {} offers for task {}: {}", batchToSend.size(), event.
+                        taskId(), e.getMessage(), e);
+            } catch (Exception e){
+                log.error("Unexpected error in flushBuffer for task {}: {}", event.taskId(), e.getMessage(), e);
             }
-
-            taskBuffer.clear();
         }
     }
 

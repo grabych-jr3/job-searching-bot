@@ -47,6 +47,7 @@ public class JobHttpClient {
                         throw new ScraperRateLimitException("HTTP error " + e.getStatusCode() + " fetching " + url, e);
                     }
                     backoff(attempt);
+                    continue;
                 }
 
                 if (status >= 500) {
@@ -54,6 +55,7 @@ public class JobHttpClient {
                         throw new ScraperUnavailableException("Target server error (HTTP " + status + ") for " + url, e);
                     }
                     backoff(attempt);
+                    continue;
                 }
 
                 throw new ScraperUnavailableException("Unexpected HTTP error " + status + " for " + url, e);

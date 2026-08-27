@@ -2,9 +2,6 @@ package com.ogidazepam.job_api_service.auth.util;
 
 import com.ogidazepam.job_api_service.auth.model.entity.Customer;
 import com.ogidazepam.job_api_service.auth.repository.CustomerRepository;
-import com.ogidazepam.job_api_service.exception.ResourceNotFoundException;
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
