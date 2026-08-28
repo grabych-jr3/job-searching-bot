@@ -1,5 +1,6 @@
 package com.ogidazepam.search_service.service;
 
+import com.ogidazepam.search_service.config.KafkaConfig;
 import com.ogidazepam.search_service.model.event.CreatedTaskEvent;
 import com.ogidazepam.search_service.model.event.JobOfferEvent;
 import com.ogidazepam.search_service.strategy.JobSearcher;
@@ -31,7 +32,7 @@ public class JobSearchService {
                         try {
                             searcher.search(event, offer ->
                                     kafkaProducerService.sendToKafka(
-                                            "found-offers-topic",
+                                            KafkaConfig.MAIN_TOPIC,
                                             event.taskId(),
                                             JobOfferEvent.offer(event.taskId(), event.customerId(), event.cvHash(), offer))
                             );
@@ -44,7 +45,7 @@ public class JobSearchService {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         } finally {
             kafkaProducerService.sendToKafka(
-                    "found-offers-topic",
+                    KafkaConfig.MAIN_TOPIC,
                     event.taskId(),
                     JobOfferEvent.finishedOffer(event.taskId(), event.customerId(), event.cvHash())
             );

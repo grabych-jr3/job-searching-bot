@@ -10,10 +10,13 @@ import org.springframework.kafka.config.TopicBuilder;
 @EnableKafka
 public class KafkaConfig {
 
+    public static final String MAIN_TOPIC = "found-offers-topic";
+    public static final String CONSUMING_TOPIC = "tasks-topic";
+
     @Bean
     public NewTopic jobTopic(){
         return TopicBuilder
-                .name("found-offers-topic")
+                .name(MAIN_TOPIC)
                 .partitions(3)
                 .replicas(1)
                 .build();

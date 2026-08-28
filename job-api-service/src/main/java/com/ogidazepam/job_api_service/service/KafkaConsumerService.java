@@ -1,5 +1,6 @@
 package com.ogidazepam.job_api_service.service;
 
+import com.ogidazepam.job_api_service.config.KafkaConfig;
 import com.ogidazepam.job_api_service.model.event.AnalyzedOfferEvent;
 import com.ogidazepam.job_api_service.util.redis.RedisSsePublisher;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,7 @@ public class KafkaConsumerService {
     }
 
     @RetryableTopic(attempts = "4", dltStrategy = DltStrategy.ALWAYS_RETRY_ON_ERROR, topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE)
-    @KafkaListener(topics = "completed-offer-topic")
+    @KafkaListener(topics = KafkaConfig.CONSUMING_TOPIC)
     public void consumeCompletedOffers(
             @Payload AnalyzedOfferEvent event,
             @Header(KafkaHeaders.RECEIVED_KEY) String taskId,

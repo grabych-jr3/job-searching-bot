@@ -1,5 +1,6 @@
 package com.ogidazepam.search_service.service;
 
+import com.ogidazepam.search_service.config.KafkaConfig;
 import com.ogidazepam.search_service.model.event.CreatedTaskEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.DltHandler;
@@ -23,7 +24,7 @@ public class KafkaConsumerService {
     }
 
     @RetryableTopic(attempts = "4", dltStrategy = DltStrategy.ALWAYS_RETRY_ON_ERROR, topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE)
-    @KafkaListener(topics = "search-jobs-topic")
+    @KafkaListener(topics = KafkaConfig.CONSUMING_TOPIC)
     public void consume(
             @Payload CreatedTaskEvent event,
             @Header(KafkaHeaders.RECEIVED_KEY) String taskId,

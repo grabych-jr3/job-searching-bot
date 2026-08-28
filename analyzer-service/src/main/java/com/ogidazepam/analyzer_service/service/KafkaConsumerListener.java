@@ -1,5 +1,6 @@
 package com.ogidazepam.analyzer_service.service;
 
+import com.ogidazepam.analyzer_service.config.KafkaConfig;
 import com.ogidazepam.analyzer_service.exception.AiAnalysisException;
 import com.ogidazepam.analyzer_service.exception.ResumeProcessingException;
 import com.ogidazepam.analyzer_service.model.OfferResult;
@@ -7,6 +8,9 @@ import com.ogidazepam.analyzer_service.model.candidate.CandidateProfile;
 import com.ogidazepam.analyzer_service.model.event.AnalyzedOfferEvent;
 import com.ogidazepam.analyzer_service.model.event.JobOfferEvent;
 import com.ogidazepam.analyzer_service.model.offer.JobOffer;
+import com.ogidazepam.analyzer_service.redis.CVBytesCacheService;
+import com.ogidazepam.analyzer_service.redis.CandidateProfileCacheService;
+import com.ogidazepam.analyzer_service.redis.OfferResultCacheService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.DltHandler;
@@ -31,21 +35,22 @@ public class KafkaConsumerListener {
     private final Set<String> failedTasks = ConcurrentHashMap.newKeySet();
 
     private final AiAnalyzerService analyzerService;
-    private final RedisTemplate<String, byte[]> redisTemplate;
-    private final RedisTemplate<String, CandidateProfile> candidateProfileRedisTemplate;
-    private final RedisTemplate<String, OfferResult> offerResultRedisTemplate;
     private final KafkaProducerService<AnalyzedOfferEvent> kafkaProducerService;
 
-    public KafkaConsumerListener(AiAnalyzerService analyzerService, RedisTemplate<String, byte[]> redisTemplate, RedisTemplate<String, CandidateProfile> candidateProfileRedisTemplate, RedisTemplate<String, OfferResult> offerResultRedisTemplate, KafkaProducerService<AnalyzedOfferEvent> kafkaProducerService) {
+    private final CVBytesCacheService cvBytesCacheService;
+    private final OfferResultCacheService offerResultCacheService;
+    private final CandidateProfileCacheService candidateProfileRedisTemplate;
+
+    public KafkaConsumerListener(AiAnalyzerService analyzerService, KafkaProducerService<AnalyzedOfferEvent> kafkaProducerService, CVBytesCacheService cvBytesCacheService, OfferResultCacheService offerResultCacheService, CandidateProfileCacheService candidateProfileRedisTemplate) {
         this.analyzerService = analyzerService;
-        this.redisTemplate = redisTemplate;
-        this.candidateProfileRedisTemplate = candidateProfileRedisTemplate;
-        this.offerResultRedisTemplate = offerResultRedisTemplate;
+        this.cvBytesCacheService = cvBytesCacheService;
         this.kafkaProducerService = kafkaProducerService;
+        this.offerResultCacheService = offerResultCacheService;
+        this.candidateProfileRedisTemplate = candidateProfileRedisTemplate;
     }
 
     @RetryableTopic(attempts = "4", dltStrategy = DltStrategy.ALWAYS_RETRY_ON_ERROR, topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE)
-    @KafkaListener(topics = "found-offers-topic")
+    @KafkaListener(topics = KafkaConfig.CONSUMING_TOPIC)
     public void consume(
             @Payload JobOfferEvent event,
             @Header(KafkaHeaders.RECEIVED_KEY) String taskIdKey,
@@ -66,10 +71,9 @@ public class KafkaConsumerListener {
         if(event.type() == JobOfferEvent.EventType.OFFER){
             List<JobOffer> taskBuffer = buffers.computeIfAbsent(taskId, k -> Collections.synchronizedList(new ArrayList<>()));
 
-            String cacheKey = "analyzed_offer:" + event.customerId() + ":" + event.cvHash() + ":" + event.offer().url();
-            OfferResult cachedOfferResult = offerResultRedisTemplate.opsForValue().get(cacheKey);
+            OfferResult cachedOfferResult = offerResultCacheService.getFromCache(event.customerId(), event.cvHash(), event.offer().url());
             if (cachedOfferResult != null){
-                kafkaProducerService.sendToKafka("completed-offer-topic", event.taskId(), AnalyzedOfferEvent.offerResult(taskId, event.customerId(), event.cvHash(), cachedOfferResult));
+                kafkaProducerService.sendToKafka(KafkaConfig.MAIN_TOPIC, event.taskId(), AnalyzedOfferEvent.offerResult(taskId, event.customerId(), event.cvHash(), cachedOfferResult));
             } else {
                 taskBuffer.add(event.offer());
 
@@ -81,7 +85,7 @@ public class KafkaConsumerListener {
             flushBuffer(event);
             buffers.remove(taskId);
             if (!failedTasks.contains(taskId)){
-                kafkaProducerService.sendToKafka("completed-offer-topic", event.taskId(), AnalyzedOfferEvent.finished(taskId, event.customerId()));
+                kafkaProducerService.sendToKafka(KafkaConfig.MAIN_TOPIC, event.taskId(), AnalyzedOfferEvent.finished(taskId, event.customerId()));
             }
             cleanup(taskId);
         }
@@ -101,7 +105,7 @@ public class KafkaConsumerListener {
                 failedTasks.add(event.taskId());
                 buffers.remove(event.taskId());
                 kafkaProducerService.sendToKafka(
-                        "completed-offer-topic",
+                        KafkaConfig.MAIN_TOPIC,
                         event.taskId(),
                         AnalyzedOfferEvent.failed(event.taskId(), event.customerId(), e.getMessage())
                 );
@@ -115,8 +119,8 @@ public class KafkaConsumerListener {
     }
 
     private void cleanup(String taskId){
-        redisTemplate.delete("cv:" + taskId);
-        candidateProfileRedisTemplate.delete("analyzed:cv:" + taskId);
+        cvBytesCacheService.deleteFromCache(taskId);
+        candidateProfileRedisTemplate.deleteFromCache(taskId);
     }
 
     @DltHandler

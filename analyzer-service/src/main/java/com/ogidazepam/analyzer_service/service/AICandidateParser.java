@@ -2,6 +2,8 @@ package com.ogidazepam.analyzer_service.service;
 
 import com.ogidazepam.analyzer_service.exception.ResumeProcessingException;
 import com.ogidazepam.analyzer_service.model.candidate.CandidateProfile;
+import com.ogidazepam.analyzer_service.redis.CVBytesCacheService;
+import com.ogidazepam.analyzer_service.redis.CandidateProfileCacheService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.retry.NonTransientAiException;
@@ -20,14 +22,15 @@ public class AICandidateParser {
 
     private final ChatClient chatClient;
     private final ResumeService resumeService;
-    private final RedisTemplate<String, byte[]> redisTemplate;
-    private final RedisTemplate<String, CandidateProfile> candidateProfileRedisTemplate;
 
-    public AICandidateParser(ChatClient.Builder chatClient, ResumeService resumeService, RedisTemplate<String, byte[]> redisTemplate, RedisTemplate<String, CandidateProfile> candidateProfileRedisTemplate) {
+    private final CVBytesCacheService cvBytesCacheService;
+    private final CandidateProfileCacheService candidateProfileCacheService;
+
+    public AICandidateParser(ChatClient.Builder chatClient, ResumeService resumeService, CVBytesCacheService cvBytesCacheService, CandidateProfileCacheService candidateProfileCacheService) {
         this.chatClient = chatClient.build();
         this.resumeService = resumeService;
-        this.redisTemplate = redisTemplate;
-        this.candidateProfileRedisTemplate = candidateProfileRedisTemplate;
+        this.cvBytesCacheService = cvBytesCacheService;
+        this.candidateProfileCacheService = candidateProfileCacheService;
     }
 
     @Retryable(
@@ -43,28 +46,33 @@ public class AICandidateParser {
             jitter = 300
     )
     public CandidateProfile createCandidateProfile(String taskId){
-        String analyzedCvCacheKey = "analyzed:cv:" + taskId;
 
-        CandidateProfile analyzedCandidateProfile = candidateProfileRedisTemplate
-                .opsForValue()
-                .get(analyzedCvCacheKey);
+        CandidateProfile analyzedCandidateProfile = candidateProfileCacheService.getFromCache(taskId);
         if (analyzedCandidateProfile != null){
             return analyzedCandidateProfile;
         }
 
-        String cacheKey = "cv:" + taskId;
-
-        byte[] cachedProfile = redisTemplate.opsForValue().get(cacheKey);
+        byte[] cachedProfile = cvBytesCacheService.getFromCache(taskId);
         if (cachedProfile == null){
             throw new ResumeProcessingException("CV file not found for task " + taskId);
         }
 
         String pdfText = resumeService.extractTextFromPdf(cachedProfile);
 
-        CandidateProfile candidateProfile;
+        CandidateProfile candidateProfile = parseCandidateCv(pdfText);
 
+        if (candidateProfile == null){
+            throw new ResumeProcessingException("Gemini returned empty candidate profile for task " + taskId);
+        }
+
+        candidateProfileCacheService.cacheCandidateProfile(taskId, candidateProfile);
+
+        return candidateProfile;
+    }
+
+    private CandidateProfile parseCandidateCv(String pdfText){
         try {
-            candidateProfile = chatClient
+            return chatClient
                     .prompt()
                     .user(u -> u.text(
                             """
@@ -81,13 +89,5 @@ public class AICandidateParser {
         } catch (Exception e) {
             throw new ResumeProcessingException("Unexpected error communicating with Gemini during CV parsing", e);
         }
-
-        if (candidateProfile == null){
-            throw new ResumeProcessingException("Gemini returned empty candidate profile for task " + taskId);
-        }
-
-        candidateProfileRedisTemplate.opsForValue().set(analyzedCvCacheKey, candidateProfile, Duration.ofHours(1));
-
-        return candidateProfile;
     }
 }

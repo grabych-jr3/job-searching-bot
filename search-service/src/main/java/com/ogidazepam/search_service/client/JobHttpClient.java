@@ -89,7 +89,6 @@ public class JobHttpClient {
                 .header("Sec-Fetch-Site", "same-origin")
                 .header("Sec-Fetch-User", "?1")
                 .header("Upgrade-Insecure-Requests", "1")
-                .referrer("https://www.pracuj.pl/")
                 .timeout(10000)
                 .get();
         Element element = document.getElementById(NEXT_DATA_SCRIPT_ID);

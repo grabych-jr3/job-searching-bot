@@ -1,11 +1,13 @@
 package com.ogidazepam.job_api_service.controller;
 
 import com.ogidazepam.job_api_service.auth.util.CustomUserDetails;
+import com.ogidazepam.job_api_service.config.KafkaConfig;
 import com.ogidazepam.job_api_service.model.event.CreatedTaskEvent;
 import com.ogidazepam.job_api_service.model.request.AnalyzeRequest;
 import com.ogidazepam.job_api_service.service.KafkaProducerService;
 import com.ogidazepam.job_api_service.service.TaskService;
 import com.ogidazepam.job_api_service.util.FileValidator;
+import com.ogidazepam.job_api_service.util.redis.CvBytesCacheService;
 import jakarta.validation.Valid;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
@@ -24,13 +26,13 @@ public class JobController {
 
     private final TaskService taskService;
     private final FileValidator fileValidator;
-    private final RedisTemplate<String, byte[]> bytesRedisTemplate;
+    private final CvBytesCacheService cvBytesCacheService;
     private final KafkaProducerService<CreatedTaskEvent> kafkaProducerService;
 
-    public JobController(TaskService taskService, FileValidator fileValidator, RedisTemplate<String, byte[]> bytesRedisTemplate, KafkaProducerService<CreatedTaskEvent> kafkaProducerService) {
+    public JobController(TaskService taskService, FileValidator fileValidator, CvBytesCacheService cvBytesCacheService, KafkaProducerService<CreatedTaskEvent> kafkaProducerService) {
         this.taskService = taskService;
         this.fileValidator = fileValidator;
-        this.bytesRedisTemplate = bytesRedisTemplate;
+        this.cvBytesCacheService = cvBytesCacheService;
         this.kafkaProducerService = kafkaProducerService;
     }
 
@@ -46,8 +48,8 @@ public class JobController {
         fileValidator.validatePdf(file);
         CreatedTaskEvent event = taskService.createTaskEvent(analyzeRequest, userDetails.getCustomerId(), file.getBytes());
 
-        bytesRedisTemplate.opsForValue().set("cv:" + event.taskId(), file.getBytes(), Duration.ofHours(1));
-        kafkaProducerService.sendToKafka("search-jobs-topic", event.taskId(), event);
+        cvBytesCacheService.cacheCvBytes(event.taskId(), file.getBytes());
+        kafkaProducerService.sendToKafka(KafkaConfig.MAIN_TOPIC, event.taskId(), event);
 
         return ResponseEntity
                 .accepted()
