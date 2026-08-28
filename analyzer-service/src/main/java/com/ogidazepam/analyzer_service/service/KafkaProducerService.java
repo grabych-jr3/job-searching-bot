@@ -1,8 +1,10 @@
 package com.ogidazepam.analyzer_service.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class KafkaProducerService<T> {
 
@@ -13,6 +15,16 @@ public class KafkaProducerService<T> {
     }
 
     public void sendToKafka(String topic, String key, T event){
-        kafkaTemplate.send(topic, key, event);
+        kafkaTemplate.send(topic, key, event)
+                .whenComplete((result, ex) -> {
+                    if (ex == null){
+                        log.info("Message sent successfully for task: {} to partition [{}]: with offset: [{}]",
+                                key,
+                                result.getRecordMetadata().partition(),
+                                result.getRecordMetadata().offset());
+                    } else {
+                        log.error("Failed to send message for task: {}", key, ex);
+                    }
+                });
     }
 }

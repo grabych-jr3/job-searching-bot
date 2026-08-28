@@ -14,7 +14,7 @@ public class KafkaConfig {
     public NewTopic jobTopic(){
         return TopicBuilder
                 .name("found-offers-topic")
-                .partitions(1)
+                .partitions(3)
                 .replicas(1)
                 .build();
     }

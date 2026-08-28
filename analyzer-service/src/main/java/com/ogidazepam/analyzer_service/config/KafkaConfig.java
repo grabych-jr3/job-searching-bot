@@ -12,7 +12,7 @@ public class KafkaConfig {
     public NewTopic completedOfferTopic(){
         return TopicBuilder
                 .name("completed-offer-topic")
-                .partitions(1)
+                .partitions(3)
                 .replicas(1)
                 .build();
     }
