@@ -19,6 +19,9 @@ import java.time.OffsetDateTime;
                         name = "uk_customer_url",
                         columnNames = {"customer_id", "cvHash", "offer_url"}
                 )
+        },
+        indexes = {
+                @Index(name = "idx_analyzed_offer_customer_analyzed_at", columnList = "customer_id, analyzed_at DESC")
         }
 )
 public class AnalyzedOffer {
