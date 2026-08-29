@@ -9,10 +9,12 @@ import com.ogidazepam.search_service.websites.pracujpl.mapper.PracujPlOfferMappe
 import com.ogidazepam.search_service.websites.pracujpl.model.offer.*;
 import com.ogidazepam.search_service.strategy.JobSearcher;
 import com.ogidazepam.search_service.websites.pracujpl.util.PracujPlUriBuilder;
+import com.ogidazepam.search_service.websites.util.ErrorHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -29,7 +31,6 @@ public class PracujPlJobSearcher implements JobSearcher{
     private final PracujPlUriBuilder uriBuilder;
     private final RedisCacheService redisCacheService;
 
-    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
     private final Semaphore semaphore = new Semaphore(2);
 
     public PracujPlJobSearcher(PracujPlClient pracujPlClient, PracujPlOfferMapper offerMapper, PracujPlUriBuilder uriBuilder, RedisCacheService redisCacheService) {
@@ -43,52 +44,55 @@ public class PracujPlJobSearcher implements JobSearcher{
     public void search(CreatedTaskEvent event, Consumer<JobOffer> onFoundJob) {
         String uri = uriBuilder.buildUri(event.analyzeRequest());
 
-        List<String> urls;
-        try {
-            urls = pracujPlClient.fetchOffersUrls(uri);
-        } catch (ScraperBlockedException e){
-            log.error("PracujPl search blocked by anti-bot protection: {}", e.getMessage());
-            return;
-        } catch (Exception e){
-            log.error("Failed to fetch PracujPl offers list from {}: {}", uri, e.getMessage());
+        List<String> urls = fetchOffersUrls(uri);
+        if (urls.isEmpty()){
             return;
         }
 
-        List<CompletableFuture<Void>> tasks = urls.stream()
-                .map(url -> CompletableFuture.runAsync(() -> {
-                    JobOffer cachedJobOffer = redisCacheService.getJobOfferFromCache(url);
-                    if (cachedJobOffer != null){
-                        onFoundJob.accept(cachedJobOffer);
-                        return;
-                    }
+        try(ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            List<CompletableFuture<Void>> tasks = urls.stream()
+                    .map(url -> CompletableFuture.runAsync(
+                            () -> processOfferUrl(url, event.taskId(), onFoundJob),
+                            executor
+                    ))
+                    .toList();
 
-                    try {
-                        semaphore.acquire();
-                        PracujPlOfferData offerData = pracujPlClient.fetchOffer(url);
-                        JobOffer jobOffer = offerMapper.mapToJobOffer(offerData, event.taskId());
-                        onFoundJob.accept(jobOffer);
-                        redisCacheService.writeJobOfferToCache(jobOffer);
-                    } catch (OfferNotFoundException e){
-                        log.debug("Offer {} not found (expired/deleted), skipping", url);
-                    } catch (ScraperBlockedException e){
-                        log.warn("Scraper blocked while fetching offer {}: {}", url, e.getMessage());
-                    } catch (ScraperRateLimitException e){
-                        log.warn("Scraper banned while fetching offer {}: {}", url, e.getMessage());
-                    } catch (ScraperUnavailableException e){
-                        log.warn("The server was unavailable during fetching the offer {}: {}", url, e.getMessage());
-                    } catch (ScraperParsingException e){
-                        log.warn("Scraper failed to parse data from {}: {}", url, e.getMessage());
-                    } catch (InterruptedException e){
-                        Thread.currentThread().interrupt();
-                    } catch (Exception e){
-                        log.error("Unexpected error parsing offer {}: {}", url, e.getMessage());
-                    } finally {
-                        semaphore.release();
-                    }
-                    }, executor)
-                )
-                .toList();
-
-        CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();
+            CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();
+        }
     }
+
+    private List<String> fetchOffersUrls(String uri){
+        try {
+            return pracujPlClient.fetchOffersUrls(uri);
+        } catch (ScraperBlockedException e){
+            log.error("PracujPl search blocked by anti-bot protection: {}", e.getMessage());
+        } catch (Exception e){
+            log.error("Failed to fetch PracujPl offers list from {}: {}", uri, e.getMessage());
+        }
+        return Collections.emptyList();
+    }
+
+    private void processOfferUrl(String url, String taskId, Consumer<JobOffer> onFoundJob){
+        JobOffer cachedJobOffer = redisCacheService.getJobOfferFromCache(url);
+        if (cachedJobOffer != null){
+            onFoundJob.accept(cachedJobOffer);
+            return;
+        }
+
+        try {
+            semaphore.acquire();
+            PracujPlOfferData offerData = pracujPlClient.fetchOffer(url);
+            JobOffer jobOffer = offerMapper.mapToJobOffer(offerData, taskId);
+            onFoundJob.accept(jobOffer);
+            redisCacheService.writeJobOfferToCache(jobOffer);
+        } catch (InterruptedException e){
+            Thread.currentThread().interrupt();
+            log.warn("Processing interrupted for offer {}", url);
+        } catch (Exception e){
+            ErrorHandler.handleFetchError(url, e);
+        } finally {
+            semaphore.release();
+        }
+    }
+
 }
