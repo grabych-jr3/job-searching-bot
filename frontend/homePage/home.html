@@ -3,109 +3,331 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Analyzer</title>
+    <title>Job Analyzer - AI-Powered Resume & Vacancy Matcher</title>
     <link rel="stylesheet" href="home.css">
 </head>
 <body>
+    <!-- Navigation Bar -->
     <header class="top-nav">
         <div class="nav-container">
-            <div class="brand">
+            <a href="home.html" class="brand">
                 <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
                     <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                 </svg>
                 <span>Job Analyzer</span>
-            </div>
+            </a>
+
+            <nav class="nav-links">
+                <a href="home.html" class="nav-link active">Home</a>
+                <a href="analyzer.html" class="nav-link">Analyze CV</a>
+                <a href="../historyPage/history.html" class="nav-link">History</a>
+            </nav>
+
             <div class="nav-actions">
-                <a href="../historyPage/history.html" class="nav-btn history-nav-btn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    History
-                </a>
-                <span id="userEmail" class="user-email"></span>
-                <button type="button" id="logoutBtn" class="nav-btn logout-btn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                        <polyline points="16 17 21 12 16 7"></polyline>
-                        <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                    Sign Out
-                </button>
+                <!-- Shown when authenticated -->
+                <div id="authActions" class="auth-actions" style="display: none;">
+                    <a href="analyzer.html" class="nav-btn primary-nav-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        New Analysis
+                    </a>
+                    <span id="userEmail" class="user-email"></span>
+                    <button type="button" id="logoutBtn" class="nav-btn logout-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        Sign Out
+                    </button>
+                </div>
+
+                <!-- Shown when guest -->
+                <div id="guestActions" class="guest-actions" style="display: none;">
+                    <a href="../auth/login.html" class="nav-btn login-nav-btn">Sign In</a>
+                    <a href="../auth/signup.html" class="nav-btn register-nav-btn">Create Account</a>
+                </div>
             </div>
         </div>
     </header>
 
-    <main class="page-shell">
-        <section class="upload-card">
-            <h1>Upload file for analysis</h1>
+    <main class="home-main">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-badge">
+                <span class="pulse-dot"></span>
+                <span>AI-Powered Career Intelligence & Vacancy Scraping</span>
+            </div>
+            <h1 class="hero-title">
+                Match Your Resume to <span class="gradient-text">Top Tech Jobs</span> with Precision AI
+            </h1>
+            <p class="hero-subtitle">
+                Upload your CV in PDF format. Our distributed microservice architecture scrapes real-time listings from <strong>JustJoin IT</strong>, <strong>BulldogJob</strong>, and <strong>Pracuj.pl</strong>, evaluates match suitability from 0% to 100% using <strong>Google Gemini LLMs</strong>, and streams recruiter-grade justifications straight to your screen.
+            </p>
 
-            <form id="uploadForm" class="upload-form">
-                <fieldset class="filter-fieldset">
-                    <legend>Technology <span class="required-mark">*</span></legend>
-                    <div class="option-list option-list-radio">
-                        <label class="option-item"><input type="radio" name="technology" value="java" required>Java</label>
-                        <label class="option-item"><input type="radio" name="technology" value="javascript">JavaScript</label>
-                        <label class="option-item"><input type="radio" name="technology" value="python">Python</label>
-                        <label class="option-item"><input type="radio" name="technology" value="c">C</label>
-                        <label class="option-item"><input type="radio" name="technology" value="net">.NET</label>
-                        <label class="option-item"><input type="radio" name="technology" value="go">Go</label>
-                        <label class="option-item"><input type="radio" name="technology" value="php">PHP</label>
-                    </div>
-                </fieldset>
+            <div class="hero-cta-group">
+                <a href="analyzer.html" class="btn btn-primary btn-large">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <span>Launch Job Analyzer</span>
+                </a>
+                <a href="../historyPage/history.html" class="btn btn-secondary btn-large">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span>View Offer History</span>
+                </a>
+            </div>
 
-                <fieldset class="filter-fieldset">
-                    <legend>Experience level <span class="required-mark">*</span></legend>
-                    <div class="option-list">
-                        <label class="option-item"><input type="checkbox" name="experience" value="intern">Intern</label>
-                        <label class="option-item"><input type="checkbox" name="experience" value="junior">Junior</label>
-                        <label class="option-item"><input type="checkbox" name="experience" value="mid">Mid</label>
-                        <label class="option-item"><input type="checkbox" name="experience" value="senior">Senior</label>
-                    </div>
-                </fieldset>
-
-                <fieldset class="filter-fieldset">
-                    <legend>Work modes</legend>
-                    <div class="option-list">
-                        <label class="option-item"><input type="checkbox" name="workMode" value="full-office">Full-office</label>
-                        <label class="option-item"><input type="checkbox" name="workMode" value="hybrid">Hybrid</label>
-                        <label class="option-item"><input type="checkbox" name="workMode" value="remote">Remote</label>
-                    </div>
-                </fieldset>
-
-                <label class="file-picker" for="fileInput" id="filePickerLabel">
-                    <span class="file-picker-label" id="filePickerText">Choose PDF resume (Max 5MB)</span>
-                    <span class="file-picker-subtext">Click to browse or drag and drop your PDF</span>
-                    <input id="fileInput" type="file" name="file" accept=".pdf,application/pdf" required>
-                </label>
-                <div id="selectedFileInfo" class="selected-file-info" style="display: none;">
-                    <span id="fileNameDisplay" class="file-name-text"></span>
-                    <button type="button" id="clearFileBtn" class="clear-file-btn" title="Remove file">&times;</button>
+            <!-- Stats Bar -->
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="stat-number">100%</span>
+                    <span class="stat-label">Automated AI Matching</span>
                 </div>
-
-                <button type="submit" id="submitBtn">Start Analysis</button>
-            </form>
-
-            <div id="status" class="status" aria-live="polite">No file selected.</div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number">3+</span>
+                    <span class="stat-label">Major IT Portals Scraped</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number">0 – 100%</span>
+                    <span class="stat-label">Match Suitability Scoring</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number">Real-Time</span>
+                    <span class="stat-label">SSE Event Streaming</span>
+                </div>
+            </div>
         </section>
 
-        <section class="results-panel" aria-live="polite">
-            <div class="results-controls">
-                <div class="filter-group" aria-label="Filter offers by score range">
-                    <button class="filter-btn active" data-filter="all" type="button">All</button>
-                    <button class="filter-btn" data-filter="0-49" type="button">0-49</button>
-                    <button class="filter-btn" data-filter="50-69" type="button">50-69</button>
-                    <button class="filter-btn" data-filter="70-79" type="button">70-79</button>
-                    <button class="filter-btn" data-filter="80-100" type="button">80-100</button>
-                </div>
-                <button id="sortBtn" class="sort-btn" type="button">Sort by score</button>
+        <!-- How It Works Section -->
+        <section class="section how-it-works-section">
+            <div class="section-header">
+                <h2 class="section-title">How It Works</h2>
+                <p class="section-subtitle">A reactive, event-driven pipeline powered by Spring Boot, Apache Kafka, Redis, and Google Gemini AI.</p>
             </div>
-            <div id="resultsContainer" class="results-container">
-                <div class="empty-state">No job offers analyzed yet.</div>
+
+            <div class="pipeline-grid">
+                <div class="pipeline-card">
+                    <div class="card-step">01</div>
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </div>
+                    <h3>Upload & Extract CV</h3>
+                    <p>Upload your text-based PDF resume (up to 5MB). Apache PDFBox extracts the raw text and Gemini AI parses your skills, experience, projects, and education into a structured profile.</p>
+                </div>
+
+                <div class="pipeline-card">
+                    <div class="card-step">02</div>
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </div>
+                    <h3>Concurrent Scraping</h3>
+                    <p>Our search microservice runs parallel scrapers across JustJoin IT, BulldogJob, and Pracuj.pl using Java 21 Virtual Threads, filtering by your selected tech, experience level, and work mode.</p>
+                </div>
+
+                <div class="pipeline-card">
+                    <div class="card-step">03</div>
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                        </svg>
+                    </div>
+                    <h3>AI Recruiter Evaluation</h3>
+                    <p>Gemini LLM acts as an expert technical recruiter, comparing candidate competencies against vacancy criteria, checking city distances/commutes, and assigning a 0-100 score with concise rationale.</p>
+                </div>
+
+                <div class="pipeline-card">
+                    <div class="card-step">04</div>
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                    </div>
+                    <h3>Real-Time Streaming & History</h3>
+                    <p>Analyzed offers are published via Kafka and streamed immediately to your browser through Server-Sent Events (SSE). Results are persisted in PostgreSQL for ongoing tracking and filtering.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Score Tiers & Analysis Features -->
+        <section class="section features-section">
+            <div class="section-header">
+                <h2 class="section-title">Suitability Score Tiers</h2>
+                <p class="section-subtitle">Every vacancy is rated and categorized so you can focus on high-probability opportunities first.</p>
+            </div>
+
+            <div class="score-tiers-grid">
+                <div class="tier-card tier-urgent">
+                    <div class="tier-header">
+                        <span class="tier-badge">80 – 100%</span>
+                        <h3>Top Match</h3>
+                    </div>
+                    <p>Outstanding alignment between your technical stack, seniority, and location requirements. Immediate application recommended.</p>
+                </div>
+
+                <div class="tier-card tier-high">
+                    <div class="tier-header">
+                        <span class="tier-badge">70 – 79%</span>
+                        <h3>Strong Match</h3>
+                    </div>
+                    <p>Core technologies match well with minor skill gaps (e.g. niche libraries or secondary tools) easily covered on the job.</p>
+                </div>
+
+                <div class="tier-card tier-mid">
+                    <div class="tier-header">
+                        <span class="tier-badge">50 – 69%</span>
+                        <h3>Moderate Match</h3>
+                    </div>
+                    <p>Partial overlap in frameworks, or differences in required years of experience / commuting distance.</p>
+                </div>
+
+                <div class="tier-card tier-low">
+                    <div class="tier-header">
+                        <span class="tier-badge">0 – 49%</span>
+                        <h3>Low Match</h3>
+                    </div>
+                    <p>Significant divergence in required programming language, specialized framework, or incompatible work location.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Supported Tech & Filters -->
+        <section class="section tech-section">
+            <div class="section-header">
+                <h2 class="section-title">Supported Technologies & Portals</h2>
+                <p class="section-subtitle">Tailored specifically for modern software engineering and IT roles in Europe.</p>
+            </div>
+
+            <div class="tech-tags-wrapper">
+                <div class="tech-tag">☕ Java / Spring</div>
+                <div class="tech-tag">⚡ JavaScript / TypeScript</div>
+                <div class="tech-tag">🐍 Python / Django / FastAPI</div>
+                <div class="tech-tag">🔷 .NET / C#</div>
+                <div class="tech-tag">🐹 Go (Golang)</div>
+                <div class="tech-tag">⚙️ C / C++</div>
+                <div class="tech-tag">🐘 PHP / Laravel / Symfony</div>
+            </div>
+
+            <div class="portals-strip">
+                <span class="portals-label">Integrated Portals:</span>
+                <span class="portal-pill">JustJoin IT</span>
+                <span class="portal-pill">BulldogJob</span>
+                <span class="portal-pill">Pracuj.pl</span>
+            </div>
+        </section>
+
+        <!-- Resume Guidelines Section (To prevent backend exceptions) -->
+        <section class="section guidelines-section">
+            <div class="section-header">
+                <h2 class="section-title">Resume Upload Guidelines</h2>
+                <p class="section-subtitle">Ensure smooth AI analysis by adhering to the following document requirements:</p>
+            </div>
+
+            <div class="guidelines-grid">
+                <div class="guideline-card">
+                    <div class="guideline-icon success-icon">✓</div>
+                    <h4>Text-Searchable PDF</h4>
+                    <p>Upload a clean PDF exported directly from Word, Google Docs, or Canva. Selectable text allows 100% extraction accuracy.</p>
+                </div>
+
+                <div class="guideline-card">
+                    <div class="guideline-icon warning-icon">!</div>
+                    <h4>No Password Protection</h4>
+                    <p>Encrypted or password-protected PDF files cannot be analyzed by our automated engine. Please remove any passwords.</p>
+                </div>
+
+                <div class="guideline-card">
+                    <div class="guideline-icon warning-icon">!</div>
+                    <h4>Avoid Image-Only Scans</h4>
+                    <p>Scanned camera photos or pure raster image PDFs lack machine-readable text layers. Ensure text can be highlighted.</p>
+                </div>
+
+                <div class="guideline-card">
+                    <div class="guideline-icon success-icon">✓</div>
+                    <h4>Size Limit: Max 5MB</h4>
+                    <p>Files up to 5MB are accepted and cached in Redis for fast multi-batch evaluation against concurrent scrapers.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bottom CTA -->
+        <section class="cta-banner">
+            <div class="cta-content">
+                <h2>Ready to Supercharge Your Job Search?</h2>
+                <p>Upload your CV now and get instantaneous, AI-scored vacancy matches with actionable recruiter feedback.</p>
+                <div class="cta-buttons">
+                    <a href="analyzer.html" class="btn btn-primary btn-large">
+                        <span>Get Started – Analyze CV</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </a>
+                    <a href="../historyPage/history.html" class="btn btn-outline btn-large">
+                        <span>Check Saved History</span>
+                    </a>
+                </div>
             </div>
         </section>
     </main>
+
+    <!-- Footer -->
+    <footer class="home-footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="brand">
+                    <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                    </svg>
+                    <span>Job Analyzer</span>
+                </div>
+                <p>AI-driven job vacancy scraper & match analyzer microservice platform.</p>
+            </div>
+
+            <div class="footer-links">
+                <div class="link-column">
+                    <h4>Navigation</h4>
+                    <a href="home.html">Home</a>
+                    <a href="analyzer.html">Analyze CV</a>
+                    <a href="../historyPage/history.html">Offer History</a>
+                </div>
+                <div class="link-column">
+                    <h4>Account</h4>
+                    <a href="../auth/login.html">Sign In</a>
+                    <a href="../auth/signup.html">Create Account</a>
+                </div>
+                <div class="link-column">
+                    <h4>Tech Stack</h4>
+                    <span>Spring Boot 4.1 & Java 21</span>
+                    <span>Spring AI & Google Gemini</span>
+                    <span>Apache Kafka & Redis</span>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Job Analyzer Bot. All rights reserved.</p>
+        </div>
+    </footer>
 
     <script src="home.js"></script>
 </body>

@@ -87,8 +87,23 @@ signupForm.addEventListener('submit', async (e) => {
         });
 
         if (!registerResponse.ok) {
-            const errorText = await registerResponse.text();
-            throw new Error(errorText || 'Registration failed. Email may already be in use.');
+            let errorMsg = 'Registration failed. Please try again.';
+            if (registerResponse.status === 409) {
+                errorMsg = 'An account with this email address already exists. Please sign in instead.';
+            } else {
+                try {
+                    const errorJson = await registerResponse.json();
+                    if (errorJson.fieldErrors && Object.keys(errorJson.fieldErrors).length > 0) {
+                        errorMsg = Object.values(errorJson.fieldErrors).join('. ');
+                    } else if (errorJson.message) {
+                        errorMsg = errorJson.message;
+                    }
+                } catch {
+                    const errorText = await registerResponse.text();
+                    if (errorText) errorMsg = errorText;
+                }
+            }
+            throw new Error(errorMsg);
         }
 
         // Step 2: Automatically log in to set the HttpOnly cookie

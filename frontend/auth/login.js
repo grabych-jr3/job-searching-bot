@@ -92,10 +92,17 @@ loginForm.addEventListener('submit', async (e) => {
                 window.location.href = '../homePage/home.html';
             }, 600);
         } else if (response.status === 401 || response.status === 400 || response.status === 403) {
-            showError('Invalid email or password.');
+            showError('Invalid email or password. Please verify your credentials.');
         } else {
-            const errorText = await response.text();
-            showError(errorText || 'Authentication failed. Please check your credentials.');
+            let errorText = 'Authentication failed. Please check your credentials.';
+            try {
+                const errorJson = await response.json();
+                errorText = errorJson.message || errorText;
+            } catch {
+                const rawText = await response.text();
+                if (rawText) errorText = rawText;
+            }
+            showError(errorText);
         }
     } catch (err) {
         console.error('Login error:', err);

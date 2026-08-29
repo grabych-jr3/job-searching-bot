@@ -149,10 +149,32 @@ async function loadHistory(page = 0) {
 
         const data = await response.json();
         
-        allPageOffers = Array.isArray(data.content) ? data.content : [];
-        totalPages = Number(data.totalPages) || 1;
-        totalElements = Number(data.totalElements) || 0;
-        currentPage = Number(data.number) || page;
+        // Handle Spring Data VIA_DTO (data.page), standard PageImpl (data), and array fallbacks
+        const pageObj = data.page || {};
+        allPageOffers = Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
+        
+        totalElements = Number(
+            pageObj.totalElements ??
+            pageObj.total_elements ??
+            data.totalElements ??
+            data.total_elements ??
+            data.total ??
+            allPageOffers.length
+        ) || 0;
+
+        totalPages = Number(
+            pageObj.totalPages ??
+            pageObj.total_pages ??
+            data.totalPages ??
+            data.total_pages ??
+            (totalElements > 0 ? Math.ceil(totalElements / pageSize) : 1)
+        ) || 1;
+
+        currentPage = Number(
+            pageObj.number ??
+            data.number ??
+            page
+        ) || 0;
 
         if (totalCountEl) {
             totalCountEl.textContent = totalElements.toLocaleString();
@@ -195,7 +217,7 @@ function renderOffers() {
                         <line x1="12" y1="16" x2="12.01" y2="16"></line>
                     </svg>
                     <p>No analyzed offers yet. Run your first job offer analysis!</p>
-                    <a href="../homePage/home.html" class="empty-action-btn">
+                    <a href="../homePage/analyzer.html" class="empty-action-btn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="17 8 12 3 7 8"></polyline>
