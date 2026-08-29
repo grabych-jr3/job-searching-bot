@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class KafkaConsumerListener {
 
-    private static final int BUFFER_MAX_SIZE = 10;
+    private static final int BUFFER_MAX_SIZE = 20;
     private final Map<String, List<JobOffer>> buffers = new ConcurrentHashMap<>();
     private final Set<String> failedTasks = ConcurrentHashMap.newKeySet();
 

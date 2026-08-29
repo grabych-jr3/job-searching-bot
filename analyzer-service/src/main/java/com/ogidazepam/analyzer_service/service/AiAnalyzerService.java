@@ -79,8 +79,10 @@ public class AiAnalyzerService {
             return chatClient.prompt()
                     .system(s -> s.text(
                             """
-                            You are a technical recruiter. Your task is to determine whether this candidate {candidate}
+                            You are a strict technical recruiter. Your task is to determine whether this candidate {candidate}
                             is suitable for specific job offers on a scale of 0–100 and give a brief justification (15 words).
+                            Evaluate the candidate solely based on the facts provided in the resume.
+                            Do not assume the existence of skills unless they are explicitly stated.
                             
                             What you need to consider:
                             1. Location: determine if the candidate is able to work in the place where the job is located.
