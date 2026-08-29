@@ -4,11 +4,13 @@ import com.ogidazepam.job_api_service.model.OfferResult;
 import com.ogidazepam.job_api_service.model.entity.AnalyzedOffer;
 import com.ogidazepam.job_api_service.model.event.AnalyzedOfferEvent;
 import com.ogidazepam.job_api_service.repository.AnalyzedOfferRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class AnalyzedOfferService {
 
@@ -20,6 +22,9 @@ public class AnalyzedOfferService {
 
     @Transactional(readOnly = true)
     public Page<AnalyzedOffer> getCustomerHistory(Long customerId, Integer minScore, Integer maxScore, String search, Pageable pageable){
+        log.debug("Querying history for customerId=[{}], minScore={}, maxScore={}, search=[{}], page={}, size={}",
+                customerId, minScore, maxScore, search, pageable.getPageNumber(), pageable.getPageSize());
+
         if (minScore != null || maxScore != null || (search != null && !search.isBlank())) {
             return analyzedOfferRepository.findByCustomerIdWithFilters(
                     customerId, minScore, maxScore, search != null ? search.trim() : null, pageable
@@ -31,6 +36,9 @@ public class AnalyzedOfferService {
     @Transactional
     public void saveAnalyzedOffer(AnalyzedOfferEvent offerEvent){
         OfferResult offerResult = offerEvent.offerResult();
+        log.info("Persisting analyzed offer to DB: customerId=[{}], taskId=[{}], score={}, title=[{}], url=[{}]",
+                offerEvent.customerId(), offerEvent.taskId(), offerResult.score(), offerResult.jobTitle(), offerResult.url());
+
         analyzedOfferRepository.insertIfNotExists(
                 offerEvent.customerId(),
                 offerResult.url(),

@@ -20,9 +20,13 @@ public class CandidateProfileCacheService {
     public CandidateProfile getFromCache(String taskId){
         String key = buildKey(taskId);
         try {
-            return candidateProfileRedisTemplate.opsForValue().get(key);
+            CandidateProfile profile = candidateProfileRedisTemplate.opsForValue().get(key);
+            if (profile != null) {
+                log.debug("Redis cache hit for CandidateProfile: key=[{}]", key);
+            }
+            return profile;
         } catch (Exception e){
-            log.warn("Redis read failed for key {}: {}", key, e.getMessage());
+            log.error("Redis read failed for CandidateProfile key [{}]: {}", key, e.getMessage(), e);
             return null;
         }
     }
@@ -31,8 +35,9 @@ public class CandidateProfileCacheService {
         String key = buildKey(taskId);
         try {
             candidateProfileRedisTemplate.opsForValue().set(key, candidateProfile, Duration.ofHours(1));
+            log.debug("Cached CandidateProfile in Redis: key=[{}] (TTL: 1h)", key);
         } catch (Exception e){
-            log.warn("Redis write failed for key {}: {}", key, e.getMessage());
+            log.error("Redis write failed for CandidateProfile key [{}]: {}", key, e.getMessage(), e);
         }
     }
 
@@ -40,8 +45,9 @@ public class CandidateProfileCacheService {
         String key = buildKey(taskId);
         try {
             candidateProfileRedisTemplate.delete(key);
+            log.debug("Deleted CandidateProfile from Redis: key=[{}]", key);
         } catch (Exception e){
-            log.warn("Redis delete failed for key {}: {}", key, e.getMessage());
+            log.warn("Redis delete failed for CandidateProfile key [{}]: {}", key, e.getMessage());
         }
     }
 

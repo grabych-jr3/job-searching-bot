@@ -18,12 +18,13 @@ public class KafkaProducerService<T> {
         kafkaTemplate.send(topic, key, offerEvent)
                 .whenComplete((result, ex) -> {
                     if (ex == null){
-                        log.info("Message sent successfully for task: {} to partition [{}]: with offset: [{}]",
+                        log.info("Produced message to Kafka topic [{}] for key [{}] (partition: {}, offset: {})",
+                                topic,
                                 key,
                                 result.getRecordMetadata().partition(),
                                 result.getRecordMetadata().offset());
                     } else {
-                        log.error("Failed to send message for task: {}", key, ex);
+                        log.error("Failed to produce message to Kafka topic [{}] for key [{}]", topic, key, ex);
                     }
                 });
     }

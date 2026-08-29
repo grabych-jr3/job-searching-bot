@@ -18,9 +18,13 @@ public class RedisCacheService {
     public JobOffer getJobOfferFromCache(String id){
         String key = buildKey(id);
         try {
-            return redisTemplate.opsForValue().get(key);
+            JobOffer cached = redisTemplate.opsForValue().get(key);
+            if (cached != null) {
+                log.debug("Redis cache hit for scraped offer key: [{}]", key);
+            }
+            return cached;
         } catch (Exception e){
-            log.warn("Redis read failed for key {}: {}", key, e.getMessage());
+            log.warn("Redis read failed for key [{}]: {}", key, e.getMessage());
             return null;
         }
     }
@@ -29,8 +33,9 @@ public class RedisCacheService {
         String key = buildKey(jobOffer.id());
         try {
             redisTemplate.opsForValue().set(key, jobOffer);
+            log.debug("Cached scraped offer in Redis: key=[{}]", key);
         } catch (Exception e){
-            log.warn("Redis wriye failed for key {}: {}", key, e.getMessage());
+            log.warn("Redis write failed for key [{}]: {}", key, e.getMessage());
         }
     }
 

@@ -19,9 +19,10 @@ public class CvBytesCacheService {
     public void cacheCvBytes(String taskId, byte[] bytes){
         String key = buildKey(taskId);
         try {
+            log.debug("Caching raw CV bytes for taskId [{}] (size: {} bytes, TTL: 1h)", taskId, bytes.length);
             redisTemplate.opsForValue().set(key, bytes, Duration.ofHours(1));
         } catch (Exception e){
-            log.warn("Redis write failed for key {}: {}", key, e.getMessage());
+            log.error("Redis write failed for CV bytes key [{}]: {}", key, e.getMessage(), e);
         }
     }
 

@@ -9,17 +9,16 @@ import com.ogidazepam.job_api_service.service.TaskService;
 import com.ogidazepam.job_api_service.util.FileValidator;
 import com.ogidazepam.job_api_service.util.redis.CvBytesCacheService;
 import jakarta.validation.Valid;
-import org.springframework.data.redis.core.RedisTemplate;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.Duration;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
 public class JobController {
@@ -45,11 +44,16 @@ public class JobController {
             @RequestPart("file")MultipartFile file,
             @AuthenticationPrincipal CustomUserDetails userDetails
             ) throws IOException {
+        log.info("Received analysis request: customerId={}, technology={}, experience={}, workModes={}, fileSize={} bytes",
+                userDetails.getCustomerId(), analyzeRequest.technology(), analyzeRequest.experience(), analyzeRequest.workMode(), file.getSize());
+
         fileValidator.validatePdf(file);
         CreatedTaskEvent event = taskService.createTaskEvent(analyzeRequest, userDetails.getCustomerId(), file.getBytes());
 
         cvBytesCacheService.cacheCvBytes(event.taskId(), file.getBytes());
         kafkaProducerService.sendToKafka(KafkaConfig.MAIN_TOPIC, event.taskId(), event);
+
+        log.info("Created and dispatched analysis task [{}] for customerId={}", event.taskId(), userDetails.getCustomerId());
 
         return ResponseEntity
                 .accepted()

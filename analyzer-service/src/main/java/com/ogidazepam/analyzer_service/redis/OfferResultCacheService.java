@@ -20,9 +20,13 @@ public class OfferResultCacheService {
     public OfferResult getFromCache(Long customerId, String cvHash, String offerUrl){
         String key = buildKey(customerId, cvHash, offerUrl);
         try {
-            return offerResultRedisTemplate.opsForValue().get(key);
+            OfferResult result = offerResultRedisTemplate.opsForValue().get(key);
+            if (result != null) {
+                log.debug("Redis cache hit for analyzed offer: customerId=[{}], score={}", customerId, result.score());
+            }
+            return result;
         } catch (Exception e){
-            log.warn("Redis read failed for key {}: {}", key, e.getMessage());
+            log.error("Redis read failed for OfferResult key [{}]: {}", key, e.getMessage(), e);
             return null;
         }
     }
@@ -31,8 +35,9 @@ public class OfferResultCacheService {
         String key = buildKey(customerId, cvHash, offerUrl);
         try {
             offerResultRedisTemplate.opsForValue().set(key, result, Duration.ofDays(7));
+            log.debug("Cached OfferResult in Redis: customerId=[{}], score={}, TTL=7d", customerId, result.score());
         } catch (Exception e) {
-            log.warn("Redis write failed for key {}: {}", key, e.getMessage());
+            log.error("Redis write failed for OfferResult key [{}]: {}", key, e.getMessage(), e);
         }
     }
 

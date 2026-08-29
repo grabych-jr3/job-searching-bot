@@ -31,7 +31,8 @@ public class KafkaConsumerService {
             @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
             @Header(KafkaHeaders.OFFSET) long offset
     ){
-        log.info("Received message: {} from partition: {}, offset: {}", taskId, partition, offset);
+        log.info("Consumed CreatedTaskEvent for taskId: {}, customerId: {}, tech: {} (partition: {}, offset: {})",
+                taskId, event.customerId(), event.analyzeRequest().technology(), partition, offset);
         jobSearchService.searchAll(event);
     }
 
@@ -41,6 +42,7 @@ public class KafkaConsumerService {
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
             @Header(KafkaHeaders.OFFSET) long offset
     ){
-        log.warn("Message was sent to DLT {} on offset: {}. Payload: {}", topic, offset, event);
+        log.error("CreatedTaskEvent routed to DLT topic [{}] on offset [{}]. TaskId: {}, customerId: {}",
+                topic, offset, event.taskId(), event.customerId());
     }
 }

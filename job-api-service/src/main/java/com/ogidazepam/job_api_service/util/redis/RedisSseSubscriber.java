@@ -2,12 +2,14 @@ package com.ogidazepam.job_api_service.util.redis;
 
 import com.ogidazepam.job_api_service.model.event.AnalyzedOfferEvent;
 import com.ogidazepam.job_api_service.service.SSENotificationService;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
+@Slf4j
 @Component
 public class RedisSseSubscriber implements MessageListener {
 
@@ -23,6 +25,8 @@ public class RedisSseSubscriber implements MessageListener {
     public void onMessage(Message message, byte @Nullable [] pattern) {
         AnalyzedOfferEvent event = objectMapper.readValue(message.getBody(), AnalyzedOfferEvent.class);
         String taskId = event.taskId();
+
+        log.debug("Received Redis SSE event for taskId: {}, type: {}", taskId, event.type());
 
         switch (event.type()) {
             case OFFER -> sseNotificationService.sendOffer(taskId, event.offerResult());

@@ -57,11 +57,13 @@ public class KafkaConsumerListener {
             @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
             @Header(KafkaHeaders.OFFSET) long offset
     ){
-        log.info("Received event: {} from partition: {}, offset: {}", taskIdKey, partition, offset);
         String taskId = event.taskId();
+        log.info("Consumed JobOfferEvent for taskId: {}, type: {}, customerId: {} (partition: {}, offset: {})",
+                taskId, event.type(), event.customerId(), partition, offset);
 
         if (failedTasks.contains(taskId)){
             if (event.type() == JobOfferEvent.EventType.SEARCH_FINISHED){
+                log.info("Search finished for already-failed task [{}]. Cleaning up resources.", taskId);
                 failedTasks.remove(taskId);
                 cleanup(taskId);
             }
@@ -73,9 +75,13 @@ public class KafkaConsumerListener {
 
             OfferResult cachedOfferResult = offerResultCacheService.getFromCache(event.customerId(), event.cvHash(), event.offer().url());
             if (cachedOfferResult != null){
+                log.info("Found cached analysis for offer [{}] (score: {}/100, task: {}). Emitting to Kafka.",
+                        cachedOfferResult.jobTitle(), cachedOfferResult.score(), taskId);
                 kafkaProducerService.sendToKafka(KafkaConfig.MAIN_TOPIC, event.taskId(), AnalyzedOfferEvent.offerResult(taskId, event.customerId(), event.cvHash(), cachedOfferResult));
             } else {
                 taskBuffer.add(event.offer());
+                log.debug("Buffered offer [{}] for task [{}]. Current buffer: {}/{}",
+                        event.offer().jobTitle(), taskId, taskBuffer.size(), BUFFER_MAX_SIZE);
 
                 if (taskBuffer.size() >= BUFFER_MAX_SIZE){
                     flushBuffer(event);
@@ -85,6 +91,7 @@ public class KafkaConsumerListener {
             flushBuffer(event);
             buffers.remove(taskId);
             if (!failedTasks.contains(taskId)){
+                log.info("Completed all offer evaluations for task [{}]. Emitting ANALYSIS_FINISHED event.", taskId);
                 kafkaProducerService.sendToKafka(KafkaConfig.MAIN_TOPIC, event.taskId(), AnalyzedOfferEvent.finished(taskId, event.customerId()));
             }
             cleanup(taskId);
@@ -98,10 +105,12 @@ public class KafkaConsumerListener {
             List<JobOffer> batchToSend = new ArrayList<>(taskBuffer);
             taskBuffer.clear();
 
+            log.info("Flushing batch of {} job offers for AI analysis (taskId: {})", batchToSend.size(), event.taskId());
+
             try {
                 analyzerService.analyze(event, batchToSend);
             } catch (ResumeProcessingException e){
-                log.error("Fatal CV parsing error for task {}: {}", event.taskId(), e.getMessage());
+                log.error("Fatal CV parsing error for task [{}]: {}", event.taskId(), e.getMessage());
                 failedTasks.add(event.taskId());
                 buffers.remove(event.taskId());
                 kafkaProducerService.sendToKafka(
@@ -110,15 +119,15 @@ public class KafkaConsumerListener {
                         AnalyzedOfferEvent.failed(event.taskId(), event.customerId(), e.getMessage())
                 );
             } catch (AiAnalysisException e){
-                log.error("Failed to analyze a batch of {} offers for task {}: {}", batchToSend.size(), event.
-                        taskId(), e.getMessage(), e);
+                log.error("Failed to analyze batch of {} offers for task [{}]: {}", batchToSend.size(), event.taskId(), e.getMessage(), e);
             } catch (Exception e){
-                log.error("Unexpected error in flushBuffer for task {}: {}", event.taskId(), e.getMessage(), e);
+                log.error("Unexpected error in flushBuffer for task [{}]: {}", event.taskId(), e.getMessage(), e);
             }
         }
     }
 
     private void cleanup(String taskId){
+        log.debug("Cleaning up temporary Redis cache for taskId [{}]", taskId);
         cvBytesCacheService.deleteFromCache(taskId);
         candidateProfileRedisTemplate.deleteFromCache(taskId);
     }
@@ -129,6 +138,7 @@ public class KafkaConsumerListener {
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
             @Header(KafkaHeaders.OFFSET) long offset
     ){
-        log.warn("Message was sent to DLT {} on offset: {}. Payload: {}", topic, offset, event);
+        log.error("JobOfferEvent routed to DLT topic [{}] on offset [{}]. TaskId: {}, type: {}, customerId: {}",
+                topic, offset, event.taskId(), event.type(), event.customerId());
     }
 }

@@ -6,6 +6,7 @@ import com.ogidazepam.job_api_service.auth.model.entity.Customer;
 import com.ogidazepam.job_api_service.auth.model.enums.CustomerRole;
 import com.ogidazepam.job_api_service.auth.repository.CustomerRepository;
 import com.ogidazepam.job_api_service.auth.util.CustomUserDetails;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class CustomerService {
 
@@ -34,9 +36,11 @@ public class CustomerService {
     @Transactional
     public void saveCustomer(SignUpRequest dto){
         if (customerRepository.existsByEmail(dto.email())){
+            log.warn("Registration rejected: email [{}] is already registered", dto.email());
             throw new DataIntegrityViolationException("This email was already registered");
         }
-        customerRepository.save(toCustomer(dto));
+        Customer savedCustomer = customerRepository.save(toCustomer(dto));
+        log.info("Customer registered successfully with id [{}] and email [{}]", savedCustomer.getId(), dto.email());
     }
 
     public String login(LoginRequest dto){
@@ -48,6 +52,7 @@ public class CustomerService {
         );
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        log.info("Customer authenticated successfully: id=[{}], email=[{}]", userDetails.getCustomerId(), dto.email());
         return jwtService.generateToken(userDetails);
     }
 

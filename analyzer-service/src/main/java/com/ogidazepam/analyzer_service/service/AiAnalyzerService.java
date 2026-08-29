@@ -8,11 +8,11 @@ import com.ogidazepam.analyzer_service.model.event.AnalyzedOfferEvent;
 import com.ogidazepam.analyzer_service.model.event.JobOfferEvent;
 import com.ogidazepam.analyzer_service.model.offer.JobOffer;
 import com.ogidazepam.analyzer_service.redis.OfferResultCacheService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.ai.retry.TransientAiException;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -20,6 +20,7 @@ import org.springframework.web.client.ResourceAccessException;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class AiAnalyzerService {
 
@@ -48,12 +49,20 @@ public class AiAnalyzerService {
             jitter = 300
     )
     public void analyze(JobOfferEvent event, List<JobOffer> offers){
-        CandidateProfile candidateProfile = aiCandidateParser.createCandidateProfile(event.taskId());
+        log.info("Starting AI suitability analysis for {} job offers (taskId: [{}], customerId: [{}])",
+                offers.size(), event.taskId(), event.customerId());
 
-        List<OfferResult> offerResults = evaluate(candidateProfile, offers);
+        CandidateProfile candidateProfile = aiCandidateParser.createCandidateProfile(event.taskId());
+        List<OfferResult> offerResults = evaluate(candidateProfile, offers, event.taskId());
 
         if (offerResults != null){
+            log.info("Gemini AI successfully evaluated {}/{} job offers for taskId [{}]",
+                    offerResults.size(), offers.size(), event.taskId());
+
             offerResults.forEach(offer -> {
+                log.debug("Offer evaluated: [{}] -> score: {}/100, reason: [{}]",
+                        offer.jobTitle(), offer.score(), offer.reason());
+
                 kafkaProducerService.sendToKafka(
                         KafkaConfig.MAIN_TOPIC,
                         event.taskId(),
@@ -65,7 +74,7 @@ public class AiAnalyzerService {
         }
     }
 
-    private List<OfferResult> evaluate(CandidateProfile candidateProfile, List<JobOffer> offers){
+    private List<OfferResult> evaluate(CandidateProfile candidateProfile, List<JobOffer> offers, String taskId){
         try {
             return chatClient.prompt()
                     .system(s -> s.text(
@@ -87,10 +96,13 @@ public class AiAnalyzerService {
                     .call()
                     .entity(new ParameterizedTypeReference<List<OfferResult>>(){});
         } catch (NonTransientAiException e){
+            log.error("Non-transient Gemini AI error while evaluating job offers for taskId [{}]: {}", taskId, e.getMessage(), e);
             throw new AiAnalysisException("Gemini analysis failed due to model output formatting or safety violation", e);
         } catch (TransientAiException | HttpClientErrorException.TooManyRequests | ResourceAccessException e) {
+            log.warn("Transient/rate-limit error from Gemini AI during job offer evaluation for taskId [{}]: {}. Will retry.", taskId, e.getMessage());
             throw e;
         } catch (Exception e) {
+            log.error("Unexpected error evaluating offers with Gemini for taskId [{}]: {}", taskId, e.getMessage(), e);
             throw new AiAnalysisException("Failed to analyze batch of offers with Gemini: " + e.getMessage(), e);
         }
     }

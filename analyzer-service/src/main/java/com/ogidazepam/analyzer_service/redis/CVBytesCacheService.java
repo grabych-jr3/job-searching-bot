@@ -17,9 +17,15 @@ public class CVBytesCacheService {
     public byte[] getFromCache(String taskId){
         String key = buildKey(taskId);
         try {
-            return cvRedisTemplate.opsForValue().get(key);
+            byte[] bytes = cvRedisTemplate.opsForValue().get(key);
+            if (bytes != null) {
+                log.debug("Redis cache hit for raw CV bytes: key=[{}] ({} bytes)", key, bytes.length);
+            } else {
+                log.warn("Redis cache miss for raw CV bytes: key=[{}]", key);
+            }
+            return bytes;
         } catch (Exception e) {
-            log.warn("Redis read failed for key {}: {}", key, e.getMessage());
+            log.error("Redis read failed for CV bytes key [{}]: {}", key, e.getMessage(), e);
             return null;
         }
     }
@@ -27,9 +33,10 @@ public class CVBytesCacheService {
     public void deleteFromCache(String taskId){
         String key = buildKey(taskId);
         try {
-            cvRedisTemplate.delete(taskId);
+            cvRedisTemplate.delete(key);
+            log.debug("Deleted raw CV bytes from Redis: key=[{}]", key);
         } catch (Exception e){
-            log.warn("Redis delete failed for key {}: {}", key, e.getMessage());
+            log.warn("Redis delete failed for CV bytes key [{}]: {}", key, e.getMessage());
         }
     }
 
