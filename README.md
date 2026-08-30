@@ -1,4 +1,4 @@
-# 🚀 Job Searcher Bot
+# 🚀 Job Analyzer
 
 An AI-powered, event-driven microservice platform that parses IT job vacancy portals, extracts and evaluates vacancy requirements against a candidate's PDF resume using **Google Gemini LLM**, and streams personalized match scores (0–100%) and justifications in real-time.
 
