@@ -58,8 +58,8 @@ public class KafkaConsumerListener {
             @Header(KafkaHeaders.OFFSET) long offset
     ){
         String taskId = event.taskId();
-        log.info("Consumed JobOfferEvent for taskId: {}, type: {}, customerId: {} (partition: {}, offset: {})",
-                taskId, event.type(), event.customerId(), partition, offset);
+        log.info("Consumed JobOfferEvent for taskId: {}, type: {} (partition: {}, offset: {})",
+                taskId, event.type(), partition, offset);
 
         if (failedTasks.contains(taskId)){
             if (event.type() == JobOfferEvent.EventType.SEARCH_FINISHED){
@@ -73,11 +73,11 @@ public class KafkaConsumerListener {
         if(event.type() == JobOfferEvent.EventType.OFFER){
             List<JobOffer> taskBuffer = buffers.computeIfAbsent(taskId, k -> Collections.synchronizedList(new ArrayList<>()));
 
-            OfferResult cachedOfferResult = offerResultCacheService.getFromCache(event.customerId(), event.cvHash(), event.offer().url());
+            OfferResult cachedOfferResult = offerResultCacheService.getFromCache(event.cvHash(), event.offer().url());
             if (cachedOfferResult != null){
                 log.info("Found cached analysis for offer [{}] (score: {}/100, task: {}). Emitting to Kafka.",
                         cachedOfferResult.jobTitle(), cachedOfferResult.score(), taskId);
-                kafkaProducerService.sendToKafka(KafkaConfig.MAIN_TOPIC, event.taskId(), AnalyzedOfferEvent.offerResult(taskId, event.customerId(), event.cvHash(), cachedOfferResult));
+                kafkaProducerService.sendToKafka(KafkaConfig.MAIN_TOPIC, event.taskId(), AnalyzedOfferEvent.offerResult(taskId, event.cvHash(), cachedOfferResult));
             } else {
                 taskBuffer.add(event.offer());
                 log.debug("Buffered offer [{}] for task [{}]. Current buffer: {}/{}",
@@ -92,7 +92,7 @@ public class KafkaConsumerListener {
             buffers.remove(taskId);
             if (!failedTasks.contains(taskId)){
                 log.info("Completed all offer evaluations for task [{}]. Emitting ANALYSIS_FINISHED event.", taskId);
-                kafkaProducerService.sendToKafka(KafkaConfig.MAIN_TOPIC, event.taskId(), AnalyzedOfferEvent.finished(taskId, event.customerId()));
+                kafkaProducerService.sendToKafka(KafkaConfig.MAIN_TOPIC, event.taskId(), AnalyzedOfferEvent.finished(taskId));
             }
             cleanup(taskId);
         }
@@ -116,7 +116,7 @@ public class KafkaConsumerListener {
                 kafkaProducerService.sendToKafka(
                         KafkaConfig.MAIN_TOPIC,
                         event.taskId(),
-                        AnalyzedOfferEvent.failed(event.taskId(), event.customerId(), e.getMessage())
+                        AnalyzedOfferEvent.failed(event.taskId(), e.getMessage())
                 );
             } catch (AiAnalysisException e){
                 log.error("Failed to analyze batch of {} offers for task [{}]: {}", batchToSend.size(), event.taskId(), e.getMessage(), e);
@@ -138,7 +138,7 @@ public class KafkaConsumerListener {
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
             @Header(KafkaHeaders.OFFSET) long offset
     ){
-        log.error("JobOfferEvent routed to DLT topic [{}] on offset [{}]. TaskId: {}, type: {}, customerId: {}",
-                topic, offset, event.taskId(), event.type(), event.customerId());
+        log.error("JobOfferEvent routed to DLT topic [{}] on offset [{}]. TaskId: {}, type: {}",
+                topic, offset, event.taskId(), event.type());
     }
 }

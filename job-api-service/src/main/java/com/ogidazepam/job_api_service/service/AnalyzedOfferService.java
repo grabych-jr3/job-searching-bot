@@ -21,29 +21,29 @@ public class AnalyzedOfferService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AnalyzedOffer> getCustomerHistory(Long customerId, Integer minScore, Integer maxScore, String search, Pageable pageable){
-        log.debug("Querying history for customerId=[{}], minScore={}, maxScore={}, search=[{}], page={}, size={}",
-                customerId, minScore, maxScore, search, pageable.getPageNumber(), pageable.getPageSize());
+    public Page<AnalyzedOffer> getCustomerHistory(Integer minScore, Integer maxScore, String search, Pageable pageable){
+        log.debug("Querying history for minScore={}, maxScore={}, search=[{}], page={}, size={}",
+                minScore, maxScore, search, pageable.getPageNumber(), pageable.getPageSize());
 
         if (minScore != null || maxScore != null || (search != null && !search.isBlank())) {
-            return analyzedOfferRepository.findByCustomerIdWithFilters(
-                    customerId, minScore, maxScore, search != null ? search.trim() : null, pageable
+            return analyzedOfferRepository.findWithFilters(
+                    minScore, maxScore, search != null ? search.trim() : null, pageable
             );
         }
-        return analyzedOfferRepository.findByCustomerId(customerId, pageable);
+        return analyzedOfferRepository.findAll(pageable);
     }
 
     @Transactional
     public void saveAnalyzedOffer(AnalyzedOfferEvent offerEvent){
         OfferResult offerResult = offerEvent.offerResult();
-        log.info("Persisting analyzed offer to DB: customerId=[{}], taskId=[{}], score={}, title=[{}], url=[{}]",
-                offerEvent.customerId(), offerEvent.taskId(), offerResult.score(), offerResult.jobTitle(), offerResult.url());
+        log.info("Persisting analyzed offer to DB: taskId=[{}], score={}, title=[{}], companyName=[{}], url=[{}]",
+                 offerEvent.taskId(), offerResult.score(), offerResult.jobTitle(), offerResult.companyName(), offerResult.url());
 
         analyzedOfferRepository.insertIfNotExists(
-                offerEvent.customerId(),
                 offerResult.url(),
                 offerEvent.cvHash(),
                 offerResult.jobTitle(),
+                offerResult.companyName(),
                 offerResult.reason(),
                 offerResult.score()
         );

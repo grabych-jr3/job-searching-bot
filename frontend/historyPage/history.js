@@ -11,8 +11,6 @@ let activeScoreFilter = 'all';
 let searchQuery = '';
 
 // DOM Elements
-const userEmailEl = document.getElementById('userEmail');
-const logoutBtn = document.getElementById('logoutBtn');
 const resultsContainer = document.getElementById('resultsContainer');
 const totalCountEl = document.getElementById('totalCount');
 const searchInput = document.getElementById('searchInput');
@@ -28,48 +26,6 @@ const prevPageBtn = document.getElementById('prevPageBtn');
 const nextPageBtn = document.getElementById('nextPageBtn');
 const lastPageBtn = document.getElementById('lastPageBtn');
 const pageNumberButtons = document.getElementById('pageNumberButtons');
-
-// Route Guard: verify session with backend before rendering page
-async function checkAuth() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-            method: 'GET',
-            credentials: 'include'
-        });
-
-        if (!response.ok) {
-            window.location.replace('../auth/login.html?expired=true');
-            return;
-        }
-
-        const data = await response.json();
-        if (userEmailEl && data.email) {
-            userEmailEl.textContent = data.email;
-        }
-
-        document.body.classList.add('authenticated');
-        loadHistory(0);
-    } catch (error) {
-        console.error('Auth verification failed:', error);
-        window.location.replace('../auth/login.html?expired=true');
-    }
-}
-
-// Logout handler
-if (logoutBtn) {
-    logoutBtn.addEventListener('click', async () => {
-        try {
-            await fetch(`${API_BASE_URL}/api/auth/logout`, {
-                method: 'POST',
-                credentials: 'include'
-            });
-        } catch (error) {
-            console.error('Logout failed:', error);
-        } finally {
-            window.location.href = '../auth/login.html?logged_out=true';
-        }
-    });
-}
 
 function getScoreTier(score) {
     if (score >= 80) return 'score-tier-urgent';
@@ -134,14 +90,8 @@ async function loadHistory(page = 0) {
         }
 
         const response = await fetch(url.toString(), {
-            method: 'GET',
-            credentials: 'include'
+            method: 'GET'
         });
-
-        if (response.status === 401 || response.status === 403) {
-            window.location.replace('../auth/login.html?expired=true');
-            return;
-        }
 
         if (!response.ok) {
             throw new Error(`Failed to load history (status ${response.status})`);
@@ -235,6 +185,7 @@ function renderOffers() {
     allPageOffers.forEach((offer) => {
         const card = document.createElement('article');
         const safeTitle = offer.jobTitle || 'Untitled position';
+        const safeCompanyName = offer.companyName || '';
         const safeUrl = offer.offerUrl || offer.url || '#';
         const safeReason = offer.reason || 'No explanation provided.';
         const numericScore = Number(offer.score ?? 0);
@@ -247,15 +198,34 @@ function renderOffers() {
         const header = document.createElement('div');
         header.className = 'offer-header';
 
+        const titleWrapper = document.createElement('div');
+        titleWrapper.className = 'offer-title-wrapper';
+
         const title = document.createElement('h2');
         title.className = 'offer-title';
         title.textContent = safeTitle;
+        titleWrapper.appendChild(title);
+
+        if (safeCompanyName) {
+            const company = document.createElement('div');
+            company.className = 'offer-company';
+            company.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="company-icon">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+            `;
+            const companyNameSpan = document.createElement('span');
+            companyNameSpan.textContent = safeCompanyName;
+            company.appendChild(companyNameSpan);
+            titleWrapper.appendChild(company);
+        }
 
         const scoreBadge = document.createElement('span');
         scoreBadge.className = `offer-score ${scoreTier}`;
         scoreBadge.textContent = `${normalizedScore}/100`;
 
-        header.appendChild(title);
+        header.appendChild(titleWrapper);
         header.appendChild(scoreBadge);
 
         const meta = document.createElement('div');
@@ -421,5 +391,5 @@ if (lastPageBtn) {
     });
 }
 
-// Run auth check on initialization
-checkAuth();
+// Initial history load
+loadHistory(0);

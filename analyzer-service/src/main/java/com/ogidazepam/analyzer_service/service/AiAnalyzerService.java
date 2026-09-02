@@ -49,8 +49,8 @@ public class AiAnalyzerService {
             jitter = 300
     )
     public void analyze(JobOfferEvent event, List<JobOffer> offers){
-        log.info("Starting AI suitability analysis for {} job offers (taskId: [{}], customerId: [{}])",
-                offers.size(), event.taskId(), event.customerId());
+        log.info("Starting AI suitability analysis for {} job offers (taskId: [{}])",
+                offers.size(), event.taskId());
 
         CandidateProfile candidateProfile = aiCandidateParser.createCandidateProfile(event.taskId());
         List<OfferResult> offerResults = evaluate(candidateProfile, offers, event.taskId());
@@ -66,10 +66,10 @@ public class AiAnalyzerService {
                 kafkaProducerService.sendToKafka(
                         KafkaConfig.MAIN_TOPIC,
                         event.taskId(),
-                        AnalyzedOfferEvent.offerResult(event.taskId(), event.customerId(), event.cvHash(), offer)
+                        AnalyzedOfferEvent.offerResult(event.taskId(), event.cvHash(), offer)
                 );
 
-                offerResultCacheService.cacheOfferResult(event.customerId(), event.cvHash(), offer.url(), offer);
+                offerResultCacheService.cacheOfferResult(event.cvHash(), offer.url(), offer);
             });
         }
     }

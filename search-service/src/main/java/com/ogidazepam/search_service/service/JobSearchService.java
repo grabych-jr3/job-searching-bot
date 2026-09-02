@@ -40,7 +40,7 @@ public class JobSearchService {
                                     kafkaProducerService.sendToKafka(
                                             KafkaConfig.MAIN_TOPIC,
                                             event.taskId(),
-                                            JobOfferEvent.offer(event.taskId(), event.customerId(), event.cvHash(), offer))
+                                            JobOfferEvent.offer(event.taskId(), event.cvHash(), offer))
                             );
                             log.debug("Scraper [{}] finished for taskId [{}]", searcherName, event.taskId());
                         } catch (Exception e){
@@ -55,7 +55,7 @@ public class JobSearchService {
             kafkaProducerService.sendToKafka(
                     KafkaConfig.MAIN_TOPIC,
                     event.taskId(),
-                    JobOfferEvent.finishedOffer(event.taskId(), event.customerId(), event.cvHash())
+                    JobOfferEvent.finishedOffer(event.taskId(), event.cvHash())
             );
         }
     }

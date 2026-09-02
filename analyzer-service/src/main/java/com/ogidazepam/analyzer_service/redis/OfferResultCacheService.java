@@ -17,12 +17,12 @@ public class OfferResultCacheService {
         this.offerResultRedisTemplate = offerResultRedisTemplate;
     }
 
-    public OfferResult getFromCache(Long customerId, String cvHash, String offerUrl){
-        String key = buildKey(customerId, cvHash, offerUrl);
+    public OfferResult getFromCache(String cvHash, String offerUrl){
+        String key = buildKey(cvHash, offerUrl);
         try {
             OfferResult result = offerResultRedisTemplate.opsForValue().get(key);
             if (result != null) {
-                log.debug("Redis cache hit for analyzed offer: customerId=[{}], score={}", customerId, result.score());
+                log.debug("Redis cache hit for analyzed offer: score={}", result.score());
             }
             return result;
         } catch (Exception e){
@@ -31,17 +31,17 @@ public class OfferResultCacheService {
         }
     }
 
-    public void cacheOfferResult(Long customerId, String cvHash, String offerUrl, OfferResult result){
-        String key = buildKey(customerId, cvHash, offerUrl);
+    public void cacheOfferResult(String cvHash, String offerUrl, OfferResult result){
+        String key = buildKey(cvHash, offerUrl);
         try {
             offerResultRedisTemplate.opsForValue().set(key, result, Duration.ofDays(7));
-            log.debug("Cached OfferResult in Redis: customerId=[{}], score={}, TTL=7d", customerId, result.score());
+            log.debug("Cached OfferResult in Redis: score={}, TTL=7d", result.score());
         } catch (Exception e) {
             log.error("Redis write failed for OfferResult key [{}]: {}", key, e.getMessage(), e);
         }
     }
 
-    private String buildKey(Long customerId, String cvHash, String offerUrl){
-        return "analyzed_offer:" + customerId + ":" + cvHash + ":" + offerUrl;
+    private String buildKey(String cvHash, String offerUrl){
+        return "analyzed_offer:" + ":" + cvHash + ":" + offerUrl;
     }
 }

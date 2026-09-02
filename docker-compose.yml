@@ -68,6 +68,18 @@ services:
     depends_on:
       - kafka
 
+  kafka-init-topics:
+    image: apache/kafka:4.0.0
+    container_name: jobs-kafka-init-topics
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic tasks-topic --partitions 3 --replication-factor 1 && \
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic found-offers-topic --partitions 3 --replication-factor 1 && \
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic completed-offers-topic --partitions 3 --replication-factor 1"
+
   job-api-service:
     build:
       context: ./job-api-service
@@ -80,7 +92,6 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/job-searcher
       DB_USERNAME: ${DB_USERNAME:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
-      SECRET: ${SECRET:-defaultSecretKeyForLocalDevelopmentOnly32BytesLong}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
@@ -92,6 +103,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      kafka-init-topics:
+        condition: service_completed_successfully
 
   search-service:
     build:
@@ -111,6 +124,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      kafka-init-topics:
+        condition: service_completed_successfully
 
   analyzer-service:
     build:
@@ -129,6 +144,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      kafka-init-topics:
+        condition: service_completed_successfully
 
   frontend:
     build:
