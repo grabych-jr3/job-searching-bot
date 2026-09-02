@@ -34,8 +34,8 @@ public class KafkaConsumerService {
             @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
             @Header(KafkaHeaders.OFFSET) long offset
     ){
-        log.info("Consumed AnalyzedOfferEvent for taskId: {}, type: {}, customerId: {} (partition: {}, offset: {})",
-                taskId, event.type(), event.customerId(), partition, offset);
+        log.info("Consumed AnalyzedOfferEvent for taskId: {}, type: {} (partition: {}, offset: {})",
+                taskId, event.type(), partition, offset);
 
         if (event.type() == AnalyzedOfferEvent.EventType.OFFER){
             analyzedOfferService.saveAnalyzedOffer(event);
@@ -50,7 +50,7 @@ public class KafkaConsumerService {
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
             @Header(KafkaHeaders.OFFSET) long offset
     ){
-        log.error("AnalyzedOfferEvent routed to DLT topic [{}] on offset [{}]. TaskId: {}, customerId: {}, type: {}, error: {}",
-                topic, offset, event.taskId(), event.customerId(), event.type(), event.errorMessage());
+        log.error("AnalyzedOfferEvent routed to DLT topic [{}] on offset [{}]. TaskId: {}, type: {}, error: {}",
+                topic, offset, event.taskId(), event.type(), event.errorMessage());
     }
 }

@@ -101,23 +101,6 @@ body {
     gap: 12px;
 }
 
-.auth-actions,
-.guest-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.user-email {
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: var(--muted);
-    background: #f0f4ff;
-    padding: 6px 12px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-}
-
 .nav-btn {
     display: inline-flex;
     align-items: center;
@@ -145,41 +128,6 @@ body {
 .primary-nav-btn:hover {
     background: var(--primary-dark);
     transform: translateY(-1px);
-}
-
-.login-nav-btn {
-    background: transparent;
-    color: var(--primary);
-    border: 1px solid var(--border);
-}
-
-.login-nav-btn:hover {
-    background: var(--primary-light);
-}
-
-.register-nav-btn {
-    background: var(--primary);
-    color: #fff;
-    border: none;
-}
-
-.register-nav-btn:hover {
-    background: var(--primary-dark);
-}
-
-.logout-btn {
-    background: #fdf2f2;
-    color: #d63b3b;
-    border: 1px solid #f8b4b4;
-}
-
-.logout-btn svg {
-    width: 16px;
-    height: 16px;
-}
-
-.logout-btn:hover {
-    background: #fee2e2;
 }
 
 /* Home Layout */

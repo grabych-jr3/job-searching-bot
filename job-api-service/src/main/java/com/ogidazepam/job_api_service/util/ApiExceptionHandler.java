@@ -5,10 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -24,23 +20,6 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class ApiExceptionHandler {
-
-    @ExceptionHandler({BadCredentialsException.class, UsernameNotFoundException.class, AuthenticationException.class})
-    public ResponseEntity<ExceptionModel> handleBadCredentials(Exception e, HttpServletRequest request){
-        log.warn("Authentication failure at path [{}]: {}", request.getRequestURI(), e.getMessage());
-        HttpStatus status = HttpStatus.UNAUTHORIZED;
-        return ResponseEntity.status(status)
-                .body(ExceptionModel.of(e.getMessage(), status, request.getRequestURI()));
-    }
-
-    @ExceptionHandler(AccessDeniedException.class)
-    private ResponseEntity<ExceptionModel> handleAccessDenied(AccessDeniedException e,
-                                                              HttpServletRequest request){
-        log.warn("Access denied at path [{}]: {}", request.getRequestURI(), e.getMessage());
-        HttpStatus status = HttpStatus.FORBIDDEN;
-        return ResponseEntity.status(status)
-                .body(ExceptionModel.of(e.getMessage(), status, request.getRequestURI()));
-    }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ExceptionModel> handleDataIntegrity(DataIntegrityViolationException e,

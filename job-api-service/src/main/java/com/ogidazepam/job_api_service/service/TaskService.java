@@ -14,10 +14,9 @@ import java.util.UUID;
 @Service
 public class TaskService {
 
-    public CreatedTaskEvent createTaskEvent(AnalyzeRequest analyzeRequest, Long customerId, byte[] fileBytes){
+    public CreatedTaskEvent createTaskEvent(AnalyzeRequest analyzeRequest, byte[] fileBytes){
         return CreatedTaskEvent.builder()
                 .taskId(generateTaskId())
-                .customerId(customerId)
                 .cvHash(hashFile(fileBytes))
                 .analyzeRequest(analyzeRequest)
                 .build();

@@ -1,8 +1,6 @@
 const API_BASE_URL = 'http://localhost:8081';
 
 // DOM Elements
-const userEmailEl = document.getElementById('userEmail');
-const logoutBtn = document.getElementById('logoutBtn');
 const form = document.getElementById('uploadForm');
 const fileInput = document.getElementById('fileInput');
 const filePickerLabel = document.getElementById('filePickerLabel');
@@ -28,49 +26,6 @@ const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 let taskStream = null;
 let offerResults = [];
 let activeFilter = 'all';
-
-// Route Guard: verify session with backend before rendering page
-async function checkAuth() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-            method: 'GET',
-            credentials: 'include'
-        });
-
-        if (!response.ok) {
-            window.location.replace('../auth/login.html?expired=true');
-            return;
-        }
-
-        const data = await response.json();
-        if (userEmailEl && data.email) {
-            userEmailEl.textContent = data.email;
-        }
-
-        document.body.classList.add('authenticated');
-    } catch (error) {
-        console.error('Auth verification failed:', error);
-        window.location.replace('../auth/login.html?expired=true');
-    }
-}
-
-checkAuth();
-
-// Logout handler
-if (logoutBtn) {
-    logoutBtn.addEventListener('click', async () => {
-        try {
-            await fetch(`${API_BASE_URL}/api/auth/logout`, {
-                method: 'POST',
-                credentials: 'include'
-            });
-        } catch (error) {
-            console.error('Logout failed:', error);
-        } finally {
-            window.location.href = '../auth/login.html?logged_out=true';
-        }
-    });
-}
 
 function closeTaskStream() {
     if (taskStream) {
@@ -151,6 +106,7 @@ function renderFilteredCards() {
     visibleOffers.forEach((offerResult) => {
         const card = document.createElement('article');
         const safeJobTitle = offerResult.jobTitle || 'Untitled position';
+        const safeCompanyName = offerResult.companyName || '';
         const safeUrl = offerResult.url || offerResult.offerUrl || '#';
         const safeReason = offerResult.reason || 'No explanation provided.';
         const numericScore = Number(offerResult.score ?? 0);
@@ -164,15 +120,34 @@ function renderFilteredCards() {
         const header = document.createElement('div');
         header.className = 'offer-header';
 
+        const titleWrapper = document.createElement('div');
+        titleWrapper.className = 'offer-title-wrapper';
+
         const title = document.createElement('h2');
         title.className = 'offer-title';
         title.textContent = safeJobTitle;
+        titleWrapper.appendChild(title);
+
+        if (safeCompanyName) {
+            const company = document.createElement('div');
+            company.className = 'offer-company';
+            company.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="company-icon">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+            `;
+            const companyNameSpan = document.createElement('span');
+            companyNameSpan.textContent = safeCompanyName;
+            company.appendChild(companyNameSpan);
+            titleWrapper.appendChild(company);
+        }
 
         const scoreBadge = document.createElement('span');
         scoreBadge.className = `offer-score ${scoreTier}`;
         scoreBadge.textContent = scoreLabel;
 
-        header.appendChild(title);
+        header.appendChild(titleWrapper);
         header.appendChild(scoreBadge);
 
         const reason = document.createElement('p');
@@ -211,10 +186,11 @@ function renderOfferCard(offerResult) {
     }
 
     const safeJobTitle = offerResult.jobTitle || 'Untitled position';
+    const safeCompanyName = offerResult.companyName || '';
     const numericScore = Number(offerResult.score ?? 0);
     const normalizedScore = Number.isFinite(numericScore) ? Math.min(Math.max(numericScore, 0), 100) : 0;
 
-    offerResults.push({ ...offerResult, score: normalizedScore, jobTitle: safeJobTitle });
+    offerResults.push({ ...offerResult, score: normalizedScore, jobTitle: safeJobTitle, companyName: safeCompanyName });
 
     if (offersCountBadge) {
         offersCountBadge.style.display = 'inline-block';
@@ -571,7 +547,7 @@ function openTaskStream(taskId) {
         </div>
     `;
 
-    taskStream = new EventSource(streamUrl, { withCredentials: true });
+    taskStream = new EventSource(streamUrl);
 
     taskStream.onopen = () => {
         showStatus(`Live SSE stream connected! Processing vacancies...`, 'loading');
@@ -733,17 +709,8 @@ form.addEventListener('submit', async (event) => {
 
         const response = await fetch(requestUrl.toString(), {
             method: 'POST',
-            body: formData,
-            credentials: 'include'
+            body: formData
         });
-
-        if (response.status === 401 || response.status === 403) {
-            showStatus('Session expired or unauthenticated. Redirecting to login...', 'error');
-            setTimeout(() => {
-                window.location.href = '../auth/login.html?expired=true';
-            }, 800);
-            return;
-        }
 
         if (!response.ok) {
             let errorText = await response.text();

@@ -17,11 +17,11 @@ import java.time.OffsetDateTime;
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_customer_url",
-                        columnNames = {"customer_id", "cvHash", "offer_url"}
+                        columnNames = {"cvHash", "offer_url"}
                 )
         },
         indexes = {
-                @Index(name = "idx_analyzed_offer_customer_analyzed_at", columnList = "customer_id, analyzed_at DESC")
+                @Index(name = "idx_analyzed_offer_analyzed_at", columnList = "analyzed_at DESC")
         }
 )
 public class AnalyzedOffer {
@@ -31,9 +31,6 @@ public class AnalyzedOffer {
     private Long id;
 
     @Column(nullable = false)
-    private Long customerId;
-
-    @Column(nullable = false)
     private String offerUrl;
 
     @Column(nullable = false)
@@ -41,6 +38,9 @@ public class AnalyzedOffer {
 
     @Column(nullable = false)
     private String jobTitle;
+
+    @Column(nullable = false)
+    private String companyName;
 
     @Column(nullable = false)
     private int score;
