@@ -11,7 +11,7 @@ An AI-powered, event-driven microservice platform that parses IT job vacancy por
 * **📡 Real-Time Live Streaming (SSE)**: Streams analyzed vacancies to the user's browser in real time over **Server-Sent Events (SSE)** powered by Redis Pub/Sub.
 * **🔄 Event-Driven Architecture**: Decoupled microservices communicating asynchronously over **Apache Kafka** with retry topics and Dead Letter Topics (DLT).
 * **⚡ Multi-Tier Redis Caching**: Caches raw resume byte arrays, structured candidate profiles, and historical offer match results to prevent redundant AI queries and scraper loads.
-* **🔒 Secure Authentication & User History**: JWT authentication with `HttpOnly` cookie session management, PostgreSQL persistence of analyzed offers, advanced score filtering, and paginated history.
+* **📊 Offer History & Advanced Filtering**: PostgreSQL persistence of analyzed offers with company name tracking, keyword search, score tier filtering, and paginated history.
 * **🐳 Fully Dockerized**: Pre-configured Docker multi-stage builds, Nginx static frontend, PostgreSQL, Redis, Apache Kafka (KRaft mode), and Kafka UI dashboard.
 
 ---
@@ -25,7 +25,7 @@ flowchart TD
     end
 
     subgraph CoreServices ["Microservices Ecosystem"]
-        API["job-api-service (:8081)\n• Auth & JWT\n• CV Validation & Hashing\n• SSE Notification Manager\n• PostgreSQL Data Access"]
+        API["job-api-service (:8081)\n• Task Dispatcher\n• CV Validation & Hashing\n• SSE Notification Manager\n• PostgreSQL Data Access"]
         SEARCH["search-service (:8082)\n• Multi-portal Scrapers\n• Virtual Threads Executor\n• HTML Sanitization"]
         ANALYZER["analyzer-service\n• PDF Text Extraction\n• Gemini LLM Analysis\n• Offer Batching Engine"]
     end
@@ -33,7 +33,7 @@ flowchart TD
     subgraph MessagingAndCache ["Messaging & Caching Infrastructure"]
         KAFKA{{"Apache Kafka 4.0\n• tasks-topic\n• found-offers-topic\n• completed-offers-topic"}}
         REDIS[("Redis Cache\n• CV File Bytes\n• Candidate Profiles\n• Offer Results Cache\n• SSE Pub/Sub Broker")]
-        DB[("PostgreSQL 18\n• Users & Roles\n• Analyzed Offers History")]
+        DB[("PostgreSQL 18\n• Analyzed Offers History")]
     end
 
     subgraph ExternalServices ["External Providers & Portals"]
@@ -44,12 +44,12 @@ flowchart TD
     %% Client Interactions
     UI -- "1. Upload CV & Criteria (POST /api/analyze)" --> API
     UI -- "2. Subscribe for Live Results (GET /api/tasks/{id}/stream)" --> API
-    UI -- "3. Query History & Auth (JWT Cookie)" --> API
+    UI -- "3. Query History & Filter Offers (GET /api/history)" --> API
 
     %% API Service Flow
     API -- "Store Raw CV Bytes" --> REDIS
     API -- "Publish Task Event" --> KAFKA
-    API -- "Persist History & Users" --> DB
+    API -- "Persist Analyzed Offers" --> DB
     REDIS -. "Subscribe to SSE Channel" .-> API
 
     %% Search Service Flow
@@ -74,14 +74,13 @@ flowchart TD
 ## 🧩 Microservices Breakdown
 
 ### 1. `job-api-service` (Port: `8081`)
-* **Role**: Gateway, Authentication, Task Dispatcher, and SSE Notification Hub.
+* **Role**: REST API Gateway, Task Dispatcher, SSE Notification Hub, and Offer History Management.
 * **Key Responsibilities**:
-  * Authenticates users (JWT issued in secure HttpOnly cookies).
   * Validates and hashes PDF resumes (SHA-256) with a 5MB size limit.
   * Caches raw CV bytes in Redis under the `taskId`.
   * Emits task events to `tasks-topic`.
   * Listens to `completed-offers-topic` and publishes updates to Redis Pub/Sub for SSE delivery.
-  * Saves analyzed offers to PostgreSQL with composite indexing for high-speed pagination and filtering.
+  * Saves analyzed offers (including company name, job title, match score, and justification) to PostgreSQL with indexing for high-speed pagination, score filtering, and keyword search.
 
 ### 2. `search-service` (Port: `8082`)
 * **Role**: High-throughput scraper and data normalizer.
@@ -98,16 +97,15 @@ flowchart TD
   * Retrieves and parses the candidate's CV from Redis using **Apache PDFBox**.
   * Caches structured candidate profiles in Redis to avoid re-parsing.
   * Buffers vacancies into batches (up to 20) and queries **Google Gemini Flash** via Spring AI.
-  * Outputs compatibility score (0–100%) and explanatory feedback.
+  * Outputs compatibility score (0–100%) and explanatory feedback with company name association.
   * Emits evaluation results and `ANALYSIS_FINISHED` events to `completed-offers-topic`.
 
 ### 4. `frontend` (Port: `80` / `5500`)
 * **Role**: Responsive Web Client served via Nginx.
 * **Key Responsibilities**:
-  * **Landing Page (`home.html`)**: Features overview, guidelines, and quick navigation.
-  * **AI Analyzer (`analyzer.html`)**: Resume drag-and-drop uploader, technology/experience selector, and real-time SSE offer stream with score tier badges (Urgent, High, Mid, Low).
+  * **Landing Page (`home.html`)**: Features overview, guidelines, and quick navigation to analysis.
+  * **AI Analyzer (`analyzer.html`)**: Resume drag-and-drop uploader, technology/experience selector, and real-time SSE offer stream with score tier badges (Urgent, High, Mid, Low) and company badges.
   * **History Page (`history.html`)**: Search, score range filters, sort orders, and paginated archive of past evaluations.
-  * **Authentication (`login.html`, `signup.html`)**: User registration and login.
 
 ---
 
@@ -123,7 +121,7 @@ flowchart TD
 
 ## 🛠️ Tech Stack
 
-* **Backend**: Java 21, Spring Boot 4.1.0, Spring AI 2.0.0, Spring Security, Spring Data JPA
+* **Backend**: Java 21, Spring Boot 4.1.0, Spring AI 2.0.0, Spring Data JPA
 * **AI Model**: Google Gemini (`gemini-3.5-flash-lite`)
 * **Messaging & Cache**: Apache Kafka 4.0 (KRaft), Redis
 * **Database**: PostgreSQL 18
@@ -154,7 +152,6 @@ Fill in the required environment variables in `.env`:
 ```ini
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
-SECRET=your_32_character_super_secret_jwt_key_here
 GEMINI_API_KEY=your_google_gemini_api_key_here
 ```
 
