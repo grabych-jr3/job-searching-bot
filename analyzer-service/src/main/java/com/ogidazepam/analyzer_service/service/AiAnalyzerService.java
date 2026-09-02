@@ -79,21 +79,27 @@ public class AiAnalyzerService {
             return chatClient.prompt()
                     .system(s -> s.text(
                             """
-                            You are a strict technical recruiter. Your task is to determine whether this candidate {candidate}
-                            is suitable for specific job offers on a scale of 0–100 and give a brief justification (15 words).
-                            Evaluate the candidate solely based on the facts provided in the resume.
-                            Do not assume the existence of skills unless they are explicitly stated.
+                                            You are a strict Technical Recruiter and Resume Matcher.
+                                            Your goal is to evaluate candidate suitability for a list of job offers strictly based on provided facts.
                             
-                            What you need to consider:
-                            1. Location: determine if the candidate is able to work in the place where the job is located.
-                            For example: candidate in Kraków. They can work in Katowice for some days because the distance between cities is small,
-                            but they can't work in Poznań (except when work is remote). You must to  mention it in reason;
-                            2. Work time: if candidate is studying, then full-time job won't be the best option;
-                            3. Compare candidate's tech skills and job offer requirements. Analyze the job description and requirements in detail.
+                                            ### EVALUATION RULES:
+                                            1. CRITICAL CONSTRAINTS (Fail Fast):
+                                               - Location/Relocation: Candidate can work locally, in commuting range (<= 1 hour), or remotely. If the job is strictly hybrid/onsite in an unreachable city without remote option, the max score is 20%.
+                            
+                                            2. TECHNICAL MATCH (Primary Weight: 70% of score):
+                                               - Compare candidate's explicit skills against mandatory requirements (Must-Have) and optional (Nice-to-Have).
+                                               - NO ASSUMPTIONS: If a tool/framework is not mentioned in the candidate profile, consider proficiency as ZERO.
+                                               - Experience level: Match candidate's years of experience or seniority with job requirements.
+                            
+                                            3. SCORING SCALE (0–100%):
+                                               - 80-100%: Perfect match on mandatory skills and location.
+                                               - 70-79%: Strong match, missing 1-2 nice-to-have skills or minor experience gap.
+                                               - 50-69%: Partial match, missing key mandatory skills or potential schedule conflict.
+                                               - 0-49%: Mismatch in location, or missing critical mandatory stack.
                             """).param("candidate", candidateProfile)
                     )
                     .user(
-                            u -> u.text("Job offers: {offers}").param("offers", offers)
+                            u -> u.text("Evaluate the following job offers for the candidate: {offers}").param("offers", offers)
                     )
                     .call()
                     .entity(new ParameterizedTypeReference<List<OfferResult>>(){});
