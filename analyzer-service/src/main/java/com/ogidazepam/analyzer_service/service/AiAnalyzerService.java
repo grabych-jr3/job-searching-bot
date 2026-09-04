@@ -1,5 +1,7 @@
 package com.ogidazepam.analyzer_service.service;
 
+import com.google.genai.errors.ApiException;
+import com.google.genai.errors.ServerException;
 import com.ogidazepam.analyzer_service.config.KafkaConfig;
 import com.ogidazepam.analyzer_service.exception.AiAnalysisException;
 import com.ogidazepam.analyzer_service.model.OfferResult;
@@ -39,7 +41,7 @@ public class AiAnalyzerService {
     @Retryable(
             includes = {
                     TransientAiException.class,
-                    HttpClientErrorException.TooManyRequests.class,
+                    ApiException.class,
                     ResourceAccessException.class
             },
             maxRetries = 3,
@@ -96,6 +98,8 @@ public class AiAnalyzerService {
                                                - 70-79%: Strong match, missing 1-2 nice-to-have skills or minor experience gap.
                                                - 50-69%: Partial match, missing key mandatory skills or potential schedule conflict.
                                                - 0-49%: Mismatch in location, or missing critical mandatory stack.
+
+                                            Candidate's CV: {candidate}
                             """).param("candidate", candidateProfile)
                     )
                     .user(
@@ -106,7 +110,7 @@ public class AiAnalyzerService {
         } catch (NonTransientAiException e){
             log.error("Non-transient Gemini AI error while evaluating job offers for taskId [{}]: {}", taskId, e.getMessage(), e);
             throw new AiAnalysisException("Gemini analysis failed due to model output formatting or safety violation", e);
-        } catch (TransientAiException | HttpClientErrorException.TooManyRequests | ResourceAccessException e) {
+        } catch (ApiException | TransientAiException | ResourceAccessException e) {
             log.warn("Transient/rate-limit error from Gemini AI during job offer evaluation for taskId [{}]: {}. Will retry.", taskId, e.getMessage());
             throw e;
         } catch (Exception e) {

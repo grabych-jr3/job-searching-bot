@@ -1,5 +1,7 @@
 package com.ogidazepam.analyzer_service.service;
 
+import com.google.genai.errors.ApiException;
+import com.google.genai.errors.ServerException;
 import com.ogidazepam.analyzer_service.exception.ResumeProcessingException;
 import com.ogidazepam.analyzer_service.model.candidate.CandidateProfile;
 import com.ogidazepam.analyzer_service.redis.CVBytesCacheService;
@@ -36,7 +38,7 @@ public class AICandidateParser {
     @Retryable(
             includes = {
                     TransientAiException.class,
-                    HttpClientErrorException.TooManyRequests.class,
+                    ApiException.class,
                     ResourceAccessException.class
             },
             maxRetries = 3,
@@ -62,7 +64,6 @@ public class AICandidateParser {
         log.info("Invoking Gemini AI to transform CV text ({} chars) into CandidateProfile for taskId [{}]", pdfText.length(), taskId);
 
         CandidateProfile candidateProfile = parseCandidateCv(pdfText, taskId);
-
         if (candidateProfile == null){
             log.error("Gemini AI returned null candidate profile for taskId [{}]", taskId);
             throw new ResumeProcessingException("Gemini returned empty candidate profile for task " + taskId);
@@ -90,7 +91,7 @@ public class AICandidateParser {
         } catch (NonTransientAiException e) {
             log.error("Non-transient Gemini AI error while parsing CV for taskId [{}]: {}", taskId, e.getMessage(), e);
             throw new ResumeProcessingException("Gemini failed to extract candidate profile from CV (safety or format issue)", e);
-        } catch (TransientAiException | HttpClientErrorException.TooManyRequests | ResourceAccessException e) {
+        } catch (ApiException | TransientAiException | ResourceAccessException e) {
             log.warn("Transient/rate-limit error from Gemini AI during CV parsing for taskId [{}]: {}. Will retry.", taskId, e.getMessage());
             throw e;
         } catch (Exception e) {
