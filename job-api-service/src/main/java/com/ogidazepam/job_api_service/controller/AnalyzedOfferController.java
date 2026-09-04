@@ -8,13 +8,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/history")
 @EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
 public class AnalyzedOfferController {
 
@@ -24,7 +21,7 @@ public class AnalyzedOfferController {
         this.analyzedOfferService = analyzedOfferService;
     }
 
-    @GetMapping("/history")
+    @GetMapping()
     public ResponseEntity<Page<AnalyzedOffer>> getCustomerHistory(
             @RequestParam(required = false) Integer minScore,
             @RequestParam(required = false) Integer maxScore,
@@ -35,5 +32,17 @@ public class AnalyzedOfferController {
                 minScore, maxScore, search, pageable
         );
         return ResponseEntity.ok(history);
+    }
+
+    @DeleteMapping()
+    public ResponseEntity<Void> deleteCustomerHistory(){
+        analyzedOfferService.deleteAll();
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("{id}")
+    public ResponseEntity<Void> deleteOfferFromHistory(@PathVariable Long id){
+        analyzedOfferService.deleteOffer(id);
+        return ResponseEntity.noContent().build();
     }
 }

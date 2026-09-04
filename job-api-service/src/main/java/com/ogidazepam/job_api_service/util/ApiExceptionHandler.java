@@ -1,5 +1,6 @@
 package com.ogidazepam.job_api_service.util;
 
+import com.ogidazepam.job_api_service.exceptions.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -79,5 +80,14 @@ public class ApiExceptionHandler {
 
         return ResponseEntity.status(status)
                 .body(exceptionModel);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ExceptionModel> handleResourceNotFound(ResponseStatusException e,
+                                                                 HttpServletRequest request){
+        log.warn("Resource not found at path [{}]: {}", request.getRequestURI(), e.getMessage());
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        return ResponseEntity.status(status)
+                .body(ExceptionModel.of(e.getReason(), status, request.getRequestURI()));
     }
 }

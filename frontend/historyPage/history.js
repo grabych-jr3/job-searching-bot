@@ -18,6 +18,7 @@ const clearSearchBtn = document.getElementById('clearSearchBtn');
 const filterButtons = document.querySelectorAll('.filter-btn');
 const sortSelect = document.getElementById('sortSelect');
 const refreshBtn = document.getElementById('refreshBtn');
+const clearHistoryBtn = document.getElementById('clearHistoryBtn');
 const paginationNav = document.getElementById('paginationNav');
 const pageInfoText = document.getElementById('pageInfoText');
 const pageSizeSelect = document.getElementById('pageSizeSelect');
@@ -242,6 +243,9 @@ function renderOffers() {
         reason.className = 'offer-reason';
         reason.textContent = safeReason;
 
+        const actionsRow = document.createElement('div');
+        actionsRow.className = 'offer-actions';
+
         const link = document.createElement('a');
         link.className = 'offer-link-btn';
         link.href = safeUrl;
@@ -255,11 +259,34 @@ function renderOffers() {
                 <line x1="10" y1="14" x2="21" y2="3"></line>
             </svg>
         `;
+        actionsRow.appendChild(link);
+
+        if (offer.id != null) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'offer-delete-btn';
+            deleteBtn.title = 'Delete offer';
+            deleteBtn.setAttribute('aria-label', `Delete ${safeTitle}`);
+            deleteBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+            `;
+            deleteBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                await deleteOffer(offer.id);
+            });
+            actionsRow.appendChild(deleteBtn);
+        }
 
         card.appendChild(header);
         card.appendChild(meta);
         card.appendChild(reason);
-        card.appendChild(link);
+        card.appendChild(actionsRow);
         resultsContainer.appendChild(card);
     });
 }
@@ -365,6 +392,59 @@ if (refreshBtn) {
     refreshBtn.addEventListener('click', () => {
         loadHistory(currentPage);
     });
+}
+
+if (clearHistoryBtn) {
+    clearHistoryBtn.addEventListener('click', () => {
+        clearHistory();
+    });
+}
+
+async function deleteOffer(id) {
+    if (!confirm('Are you sure you want to delete this offer from history?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/history/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to delete offer (status ${response.status})`);
+        }
+
+        // If this was the last item on current page and not on page 0, go back one page
+        if (allPageOffers.length === 1 && currentPage > 0) {
+            loadHistory(currentPage - 1);
+        } else {
+            loadHistory(currentPage);
+        }
+    } catch (error) {
+        console.error('Error deleting offer:', error);
+        alert(`Failed to delete offer: ${error.message || 'Unknown error'}`);
+    }
+}
+
+async function clearHistory() {
+    if (!confirm('Are you sure you want to clear all analyzed offers history? This action cannot be undone.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/history`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to clear history (status ${response.status})`);
+        }
+
+        loadHistory(0);
+    } catch (error) {
+        console.error('Error clearing history:', error);
+        alert(`Failed to clear history: ${error.message || 'Unknown error'}`);
+    }
 }
 
 if (firstPageBtn) {
