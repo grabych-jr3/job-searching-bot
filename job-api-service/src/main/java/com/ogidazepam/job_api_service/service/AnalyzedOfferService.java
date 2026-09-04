@@ -1,9 +1,11 @@
 package com.ogidazepam.job_api_service.service;
 
+import com.ogidazepam.job_api_service.exceptions.ResourceNotFoundException;
 import com.ogidazepam.job_api_service.model.OfferResult;
 import com.ogidazepam.job_api_service.model.entity.AnalyzedOffer;
 import com.ogidazepam.job_api_service.model.event.AnalyzedOfferEvent;
 import com.ogidazepam.job_api_service.repository.AnalyzedOfferRepository;
+import com.ogidazepam.job_api_service.util.redis.AnalyzedOfferCacheService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,9 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class AnalyzedOfferService {
 
     private final AnalyzedOfferRepository analyzedOfferRepository;
+    private final AnalyzedOfferCacheService analyzedOfferCacheService;
 
-    public AnalyzedOfferService(AnalyzedOfferRepository analyzedOfferRepository) {
+    public AnalyzedOfferService(AnalyzedOfferRepository analyzedOfferRepository, AnalyzedOfferCacheService analyzedOfferCacheService) {
         this.analyzedOfferRepository = analyzedOfferRepository;
+        this.analyzedOfferCacheService = analyzedOfferCacheService;
     }
 
     @Transactional(readOnly = true)
@@ -47,5 +51,23 @@ public class AnalyzedOfferService {
                 offerResult.reason(),
                 offerResult.score()
         );
+    }
+
+    @Transactional
+    public void deleteAll(){
+        analyzedOfferRepository.deleteAll();
+        log.info("Deleted all analyzed offer from DB");
+        analyzedOfferCacheService.deleteAllAnalyzedOffersFromCache();
+    }
+
+    @Transactional
+    public void deleteOffer(Long id){
+        AnalyzedOffer analyzedOffer = analyzedOfferRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Offer with id " + id + " not found"));
+
+        analyzedOfferRepository.delete(analyzedOffer);
+        log.info("Deleted analyzed offer from DB: id={}, score={}, title=[{}], companyName=[{}], url=[{}]",
+                analyzedOffer.getId(), analyzedOffer.getScore(), analyzedOffer.getJobTitle(), analyzedOffer.getCompanyName(), analyzedOffer.getOfferUrl());
+        analyzedOfferCacheService.deleteOfferFromCache(analyzedOffer.getCvHash(), analyzedOffer.getOfferUrl());
     }
 }

@@ -1,5 +1,6 @@
 package com.ogidazepam.job_api_service.config;
 
+import com.ogidazepam.job_api_service.model.entity.AnalyzedOffer;
 import com.ogidazepam.job_api_service.model.event.AnalyzedOfferEvent;
 import com.ogidazepam.job_api_service.util.redis.RedisSsePublisher;
 import com.ogidazepam.job_api_service.util.redis.RedisSseSubscriber;
@@ -22,6 +23,17 @@ public class RedisConfig {
 
         template.setKeySerializer(RedisSerializer.string());
         template.setValueSerializer(RedisSerializer.byteArray());
+
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, AnalyzedOffer> analyzedOfferRedisTemplate(RedisConnectionFactory connectionFactory){
+        RedisTemplate<String, AnalyzedOffer> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+
+        template.setKeySerializer(RedisSerializer.string());
+        template.setValueSerializer(new JacksonJsonRedisSerializer<>(AnalyzedOffer.class));
 
         return template;
     }
