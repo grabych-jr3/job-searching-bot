@@ -7,7 +7,8 @@ public record AnalyzedOfferEvent(
         String cvHash,
         OfferResult offerResult,
         String errorMessage,
-        EventType type
+        EventType type,
+        Boolean isNew
 ) {
     public enum EventType {
         OFFER,
@@ -15,15 +16,15 @@ public record AnalyzedOfferEvent(
         ANALYSIS_FAILED
     }
 
-    public static AnalyzedOfferEvent offerResult(String taskId, String cvHash, OfferResult offerResult){
-        return new AnalyzedOfferEvent(taskId, cvHash, offerResult, null, EventType.OFFER);
+    public static AnalyzedOfferEvent offerResult(String taskId, String cvHash, OfferResult offerResult, Boolean isNew){
+        return new AnalyzedOfferEvent(taskId, cvHash, offerResult, null, EventType.OFFER, isNew);
     }
 
     public static AnalyzedOfferEvent finished(String taskId){
-        return new AnalyzedOfferEvent(taskId, null, null, null, EventType.ANALYSIS_FINISHED);
+        return new AnalyzedOfferEvent(taskId, null, null, null, EventType.ANALYSIS_FINISHED, null);
     }
 
     public static AnalyzedOfferEvent failed(String taskId, String errorMessage){
-        return new AnalyzedOfferEvent(taskId, null, null, errorMessage, EventType.ANALYSIS_FAILED);
+        return new AnalyzedOfferEvent(taskId, null, null, errorMessage, EventType.ANALYSIS_FAILED, null);
     }
 }

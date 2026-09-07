@@ -77,7 +77,7 @@ public class KafkaConsumerListener {
             if (cachedOfferResult != null){
                 log.info("Found cached analysis for offer [{}] (score: {}/100, task: {}). Emitting to Kafka.",
                         cachedOfferResult.jobTitle(), cachedOfferResult.score(), taskId);
-                kafkaProducerService.sendToKafka(KafkaConfig.MAIN_TOPIC, event.taskId(), AnalyzedOfferEvent.offerResult(taskId, event.cvHash(), cachedOfferResult));
+                kafkaProducerService.sendToKafka(KafkaConfig.MAIN_TOPIC, event.taskId(), AnalyzedOfferEvent.offerResult(taskId, event.cvHash(), cachedOfferResult, false));
             } else {
                 taskBuffer.add(event.offer());
                 log.debug("Buffered offer [{}] for task [{}]. Current buffer: {}/{}",

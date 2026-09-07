@@ -1,7 +1,6 @@
 package com.ogidazepam.job_api_service.service;
 
-import com.ogidazepam.job_api_service.model.OfferResult;
-import com.ogidazepam.job_api_service.model.event.AnalyzedOfferEvent;
+import com.ogidazepam.job_api_service.model.response.SseResponseOfferResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -39,16 +38,16 @@ public class SSENotificationService {
         return emitter;
     }
 
-    public void sendOffer(String taskId, OfferResult offerResult){
+    public void sendOffer(String taskId, SseResponseOfferResult responseOfferResult){
         SseEmitter emitter = emitters.get(taskId);
         if (emitter != null){
             try {
                 emitter.send(SseEmitter.event()
                         .name("vacancy_analyzed")
-                        .data(offerResult)
+                        .data(responseOfferResult)
                         .build());
                 log.debug("Sent vacancy_analyzed SSE event for taskId [{}]: url={}, score={}",
-                        taskId, offerResult.url(), offerResult.score());
+                        taskId, responseOfferResult.offerResult().url(), responseOfferResult.offerResult().score());
             } catch (IOException e){
                 log.warn("Failed to send vacancy_analyzed event for taskId [{}]. Client likely disconnected: {}", taskId, e.getMessage());
                 emitter.completeWithError(e);

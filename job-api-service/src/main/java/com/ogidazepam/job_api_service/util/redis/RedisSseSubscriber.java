@@ -1,6 +1,7 @@
 package com.ogidazepam.job_api_service.util.redis;
 
 import com.ogidazepam.job_api_service.model.event.AnalyzedOfferEvent;
+import com.ogidazepam.job_api_service.model.response.SseResponseOfferResult;
 import com.ogidazepam.job_api_service.service.SSENotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
@@ -29,7 +30,7 @@ public class RedisSseSubscriber implements MessageListener {
         log.debug("Received Redis SSE event for taskId: {}, type: {}", taskId, event.type());
 
         switch (event.type()) {
-            case OFFER -> sseNotificationService.sendOffer(taskId, event.offerResult());
+            case OFFER -> sseNotificationService.sendOffer(taskId, new SseResponseOfferResult(event.offerResult(), event.isNew()));
             case ANALYSIS_FINISHED -> sseNotificationService.sendCompletion(taskId);
             case ANALYSIS_FAILED -> sseNotificationService.sendFailure(taskId, event.errorMessage());
         }

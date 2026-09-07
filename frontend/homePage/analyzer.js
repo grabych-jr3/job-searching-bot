@@ -78,10 +78,23 @@ function getFilterRange(filterValue) {
     }
 }
 
+function isTruthyBoolean(val) {
+    if (val === true || val === 1) return true;
+    if (typeof val === 'string') {
+        const lower = val.trim().toLowerCase();
+        return lower === 'true' || lower === '1' || lower === 'yes';
+    }
+    return false;
+}
+
 function renderFilteredCards() {
+    const isNewFilter = activeFilter === 'new';
     const range = getFilterRange(activeFilter);
     const visibleOffers = [...offerResults]
         .filter((offer) => {
+            if (isNewFilter) {
+                return isTruthyBoolean(offer.isNew);
+            }
             if (!range) {
                 return true;
             }
@@ -91,6 +104,20 @@ function renderFilteredCards() {
         })
         .sort((left, right) => Number(right.score) - Number(left.score));
 
+    if (offersCountBadge) {
+        if (offerResults.length === 0) {
+            offersCountBadge.style.display = 'none';
+            offersCountBadge.textContent = '0 Offers';
+        } else {
+            offersCountBadge.style.display = 'inline-block';
+            if (activeFilter === 'all') {
+                offersCountBadge.textContent = `${offerResults.length} Offer${offerResults.length === 1 ? '' : 's'} Found`;
+            } else {
+                offersCountBadge.textContent = `${visibleOffers.length} of ${offerResults.length} Offer${offerResults.length === 1 ? '' : 's'}`;
+            }
+        }
+    }
+
     resultsContainer.innerHTML = '';
 
     if (visibleOffers.length === 0) {
@@ -98,7 +125,7 @@ function renderFilteredCards() {
         emptyState.className = 'empty-state';
         emptyState.textContent = offerResults.length === 0
             ? 'No matching job offers found on the scraped portals for this criteria.'
-            : 'No analyzed job offers match this score range.';
+            : (isNewFilter ? 'No new job offers found matching your criteria.' : 'No analyzed job offers match this score range.');
         resultsContainer.appendChild(emptyState);
         return;
     }
@@ -113,9 +140,17 @@ function renderFilteredCards() {
         const normalizedScore = Number.isFinite(numericScore) ? Math.min(Math.max(numericScore, 0), 100) : 0;
         const scoreLabel = `${normalizedScore}% Match`;
         const scoreTier = getScoreTier(normalizedScore);
+        const isNewOffer = isTruthyBoolean(offerResult.isNew);
 
         card.className = `offer-card ${scoreTier}`;
         card.dataset.score = String(normalizedScore);
+
+        if (isNewOffer) {
+            const newBadge = document.createElement('span');
+            newBadge.className = 'offer-new-badge';
+            newBadge.textContent = 'new';
+            card.appendChild(newBadge);
+        }
 
         const header = document.createElement('div');
         header.className = 'offer-header';
@@ -180,22 +215,36 @@ function sortCardsByScore() {
     renderFilteredCards();
 }
 
-function renderOfferCard(offerResult) {
-    if (!offerResult || typeof offerResult !== 'object') {
+function renderOfferCard(responsePayload) {
+    if (!responsePayload || typeof responsePayload !== 'object') {
         return;
     }
 
-    const safeJobTitle = offerResult.jobTitle || 'Untitled position';
-    const safeCompanyName = offerResult.companyName || '';
-    const numericScore = Number(offerResult.score ?? 0);
+    // Handles SseResponseOfferResult ({ offerResult: {...}, isNew: true }) or direct OfferResult ({ jobTitle: ... })
+    const offerData = (responsePayload.offerResult && typeof responsePayload.offerResult === 'object')
+        ? responsePayload.offerResult
+        : responsePayload;
+
+    const rawIsNew = responsePayload.isNew !== undefined ? responsePayload.isNew
+        : responsePayload.new !== undefined ? responsePayload.new
+        : responsePayload.is_new !== undefined ? responsePayload.is_new
+        : offerData.isNew !== undefined ? offerData.isNew
+        : offerData.new !== undefined ? offerData.new
+        : offerData.is_new;
+
+    const isNew = isTruthyBoolean(rawIsNew);
+    const safeJobTitle = offerData.jobTitle || 'Untitled position';
+    const safeCompanyName = offerData.companyName || '';
+    const numericScore = Number(offerData.score ?? 0);
     const normalizedScore = Number.isFinite(numericScore) ? Math.min(Math.max(numericScore, 0), 100) : 0;
 
-    offerResults.push({ ...offerResult, score: normalizedScore, jobTitle: safeJobTitle, companyName: safeCompanyName });
-
-    if (offersCountBadge) {
-        offersCountBadge.style.display = 'inline-block';
-        offersCountBadge.textContent = `${offerResults.length} Offer${offerResults.length === 1 ? '' : 's'} Found`;
-    }
+    offerResults.push({
+        ...offerData,
+        score: normalizedScore,
+        jobTitle: safeJobTitle,
+        companyName: safeCompanyName,
+        isNew: isNew
+    });
 
     renderFilteredCards();
 }
