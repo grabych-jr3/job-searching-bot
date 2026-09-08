@@ -86,7 +86,7 @@ public class AiAnalyzerService {
                             
                                             ### EVALUATION RULES:
                                             1. CRITICAL CONSTRAINTS (Fail Fast):
-                                               - Location/Relocation: Candidate can work locally, in commuting range (<= 1 hour), or remotely. If the job is strictly hybrid/onsite in an unreachable city without remote option, the max score is 20%.
+                                               - Location/Relocation: Candidate can work locally, in commuting range (<= 1 hour), or remotely, or the job requires working only up to 5 days a month from the office. If the job is strictly hybrid/onsite in an unreachable city without remote option, the max score is 20%.
                             
                                             2. TECHNICAL MATCH (Primary Weight: 70% of score):
                                                - Compare candidate's explicit skills against mandatory requirements (Must-Have) and optional (Nice-to-Have).

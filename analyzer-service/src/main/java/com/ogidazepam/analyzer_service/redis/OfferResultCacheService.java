@@ -42,6 +42,6 @@ public class OfferResultCacheService {
     }
 
     private String buildKey(String cvHash, String offerUrl){
-        return "analyzed_offer:" + ":" + cvHash + ":" + offerUrl;
+        return "analyzed_offer:" + cvHash + ":" + offerUrl;
     }
 }
