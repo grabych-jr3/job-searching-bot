@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Tracker - Job Analyzer</title>
+    <link rel="stylesheet" href="applications.css">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
+        <div class="nav-container">
+            <a href="../homePage/home.html" class="brand" title="Back to Home">
+                <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+                <span>Job Analyzer</span>
+            </a>
+
+            <nav class="nav-links">
+                <a href="../homePage/home.html" class="nav-link">Home</a>
+                <a href="../homePage/analyzer.html" class="nav-link">Analyze CV</a>
+                <a href="../historyPage/history.html" class="nav-link">History</a>
+                <a href="applications.html" class="nav-link active">Applications</a>
+            </nav>
+
+            <div class="nav-actions">
+                <a href="../homePage/analyzer.html" class="nav-btn analyzer-nav-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    Analyze New CV
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="page-shell">
+        <!-- Hero Section -->
+        <header class="tracker-hero">
+            <div class="hero-text">
+                <div class="hero-pill">
+                    <span class="pulse-dot"></span>
+                    <span>Hiring Pipeline CRM</span>
+                </div>
+                <h1>Job Application Tracker</h1>
+                <p>Manage your active job applications, update interview progress, and record notes across hiring stages.</p>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-badge">
+                    <span class="stat-label">Total Applications</span>
+                    <span id="totalCount" class="stat-value">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Pipeline Stage Summary Bar -->
+        <section class="pipeline-summary-strip">
+            <div class="stage-metric" data-stage="APPLIED">
+                <span class="stage-dot dot-applied"></span>
+                <span class="stage-name">Applied</span>
+                <span id="countApplied" class="stage-count">0</span>
+            </div>
+            <div class="stage-metric" data-stage="SCREENING">
+                <span class="stage-dot dot-screening"></span>
+                <span class="stage-name">Screening</span>
+                <span id="countScreening" class="stage-count">0</span>
+            </div>
+            <div class="stage-metric" data-stage="INTERVIEW">
+                <span class="stage-dot dot-interview"></span>
+                <span class="stage-name">Interview</span>
+                <span id="countInterview" class="stage-count">0</span>
+            </div>
+            <div class="stage-metric" data-stage="OFFER">
+                <span class="stage-dot dot-offer"></span>
+                <span class="stage-name">Offer</span>
+                <span id="countOffer" class="stage-count">0</span>
+            </div>
+            <div class="stage-metric" data-stage="REJECTED">
+                <span class="stage-dot dot-rejected"></span>
+                <span class="stage-name">Rejected</span>
+                <span id="countRejected" class="stage-count">0</span>
+            </div>
+            <div class="stage-metric" data-stage="ARCHIVED">
+                <span class="stage-dot dot-archived"></span>
+                <span class="stage-name">Archived</span>
+                <span id="countArchived" class="stage-count">0</span>
+            </div>
+        </section>
+
+        <!-- Controls & Filters Section -->
+        <section class="controls-panel">
+            <div class="search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Search by job title or company name..." autocomplete="off">
+                <button type="button" id="clearSearchBtn" class="clear-search-btn" title="Clear search" aria-label="Clear search" style="display: none;">
+                    &times;
+                </button>
+            </div>
+
+            <div class="filters-row">
+                <div class="filter-group" aria-label="Filter applications by stage">
+                    <button class="filter-btn active" data-status="all" type="button">All Applications</button>
+                    <button class="filter-btn" data-status="APPLIED" type="button">Applied</button>
+                    <button class="filter-btn" data-status="SCREENING" type="button">Screening</button>
+                    <button class="filter-btn" data-status="INTERVIEW" type="button">Interview</button>
+                    <button class="filter-btn" data-status="OFFER" type="button">Offer 🎉</button>
+                    <button class="filter-btn" data-status="REJECTED" type="button">Rejected</button>
+                    <button class="filter-btn" data-status="ARCHIVED" type="button">Archived</button>
+                </div>
+
+                <div class="controls-right">
+                    <div class="sort-wrapper">
+                        <label for="sortSelect" class="sort-label">Sort:</label>
+                        <select id="sortSelect" class="sort-select">
+                            <option value="appliedAt,desc">Newest Applied</option>
+                            <option value="appliedAt,asc">Oldest Applied</option>
+                            <option value="companyName,asc">Company (A–Z)</option>
+                            <option value="jobTitle,asc">Job Title (A–Z)</option>
+                        </select>
+                    </div>
+
+                    <button type="button" id="refreshBtn" class="refresh-btn" title="Refresh application list">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Applications Cards List -->
+        <section id="resultsContainer" class="applications-container" aria-live="polite">
+            <div class="empty-state">Loading applications...</div>
+        </section>
+
+        <!-- Pagination Bar -->
+        <footer id="paginationNav" class="pagination-bar" style="display: none;">
+            <div class="pagination-info">
+                <span id="pageInfoText">Page 1 of 1</span>
+            </div>
+
+            <div class="pagination-controls">
+                <button type="button" id="firstPageBtn" class="page-nav-btn" title="First Page" disabled>&laquo;</button>
+                <button type="button" id="prevPageBtn" class="page-nav-btn" title="Previous Page" disabled>&lsaquo;</button>
+                <div id="pageNumberButtons" class="page-numbers"></div>
+                <button type="button" id="nextPageBtn" class="page-nav-btn" title="Next Page" disabled>&rsaquo;</button>
+                <button type="button" id="lastPageBtn" class="page-nav-btn" title="Last Page" disabled>&raquo;</button>
+            </div>
+
+            <div class="page-size-selector">
+                <label for="pageSizeSelect">Per page:</label>
+                <select id="pageSizeSelect" class="page-size-select">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+        </footer>
+    </main>
+
+    <div id="appToast" class="app-toast" role="alert" aria-live="assertive"></div>
+
+    <script src="applications.js"></script>
+</body>
+</html>

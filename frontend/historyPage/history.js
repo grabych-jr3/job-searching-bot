@@ -147,6 +147,104 @@ async function loadHistory(page = 0) {
     }
 }
 
+// Toast Notification
+let toastTimeout = null;
+function showToast(message, type = 'success') {
+    let toastEl = document.getElementById('historyToast');
+    if (!toastEl) {
+        toastEl = document.createElement('div');
+        toastEl.id = 'historyToast';
+        toastEl.className = 'history-toast';
+        document.body.appendChild(toastEl);
+    }
+
+    toastEl.textContent = message;
+    toastEl.className = `history-toast show ${type}`;
+
+    if (toastTimeout) {
+        clearTimeout(toastTimeout);
+    }
+
+    toastTimeout = setTimeout(() => {
+        toastEl.classList.remove('show');
+    }, 3500);
+}
+
+const appliedOfferUrls = new Set();
+
+async function fetchAppliedOfferUrls() {
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/applications?size=1000`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const items = Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
+        items.forEach(item => {
+            if (item.offerUrl) {
+                appliedOfferUrls.add(item.offerUrl);
+            }
+        });
+    } catch {
+        // Non-critical background fetch failure
+    }
+}
+
+async function applyForOffer(safeUrl, safeTitle, safeCompanyName, applyBtn) {
+    if (!safeUrl || safeUrl === '#') {
+        showToast('Invalid vacancy URL.', 'error');
+        return;
+    }
+
+    applyBtn.disabled = true;
+    const origHtml = applyBtn.innerHTML;
+    applyBtn.innerHTML = '<span>Applying...</span>';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/applications`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                offerUrl: safeUrl,
+                jobTitle: safeTitle,
+                companyName: safeCompanyName
+            })
+        });
+
+        if (!response.ok) {
+            let errorMsg = `HTTP ${response.status}`;
+            try {
+                const text = await response.text();
+                if (text) {
+                    try {
+                        const parsed = JSON.parse(text);
+                        errorMsg = parsed.message || parsed.error || errorMsg;
+                    } catch {
+                        errorMsg = text.length < 120 ? text : errorMsg;
+                    }
+                }
+            } catch {}
+            throw new Error(errorMsg);
+        }
+
+        appliedOfferUrls.add(safeUrl);
+        applyBtn.className = 'offer-apply-btn is-applied';
+        applyBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Applied ✓</span>
+        `;
+        applyBtn.disabled = true;
+        showToast(`Application tracked for "${safeTitle}"!`, 'success');
+    } catch (error) {
+        console.error('Failed to apply for offer:', error);
+        applyBtn.disabled = false;
+        applyBtn.innerHTML = origHtml;
+        showToast(`Failed to record application: ${error.message || 'Please try again.'}`, 'error');
+    }
+}
+
 // Render offers
 function renderOffers() {
     resultsContainer.innerHTML = '';
@@ -193,6 +291,7 @@ function renderOffers() {
         const normalizedScore = Number.isFinite(numericScore) ? Math.min(Math.max(numericScore, 0), 100) : 0;
         const scoreTier = getScoreTier(normalizedScore);
         const dateStr = formatDate(offer.analyzed_at || offer.analyzedAt);
+        const isAlreadyApplied = appliedOfferUrls.has(safeUrl);
 
         card.className = `offer-card ${scoreTier}`;
 
@@ -260,6 +359,34 @@ function renderOffers() {
             </svg>
         `;
         actionsRow.appendChild(link);
+
+        const applyBtn = document.createElement('button');
+        applyBtn.type = 'button';
+        if (isAlreadyApplied) {
+            applyBtn.className = 'offer-apply-btn is-applied';
+            applyBtn.disabled = true;
+            applyBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Applied ✓</span>
+            `;
+        } else {
+            applyBtn.className = 'offer-apply-btn';
+            applyBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+                <span>Apply</span>
+            `;
+            applyBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                await applyForOffer(safeUrl, safeTitle, safeCompanyName, applyBtn);
+            });
+        }
+        actionsRow.appendChild(applyBtn);
 
         if (offer.id != null) {
             const deleteBtn = document.createElement('button');
