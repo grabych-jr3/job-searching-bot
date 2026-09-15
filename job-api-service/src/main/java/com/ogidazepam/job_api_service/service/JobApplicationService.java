@@ -13,6 +13,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Service
 public class JobApplicationService {
 
@@ -48,6 +54,17 @@ public class JobApplicationService {
                 : jobApplicationRepository.findAll(pageable);
 
         return jobApplications.map(this::mapToApplyResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<ApplicationStatus, Long> getApplicationStats() {
+        Map<ApplicationStatus, Long> stats = Arrays.stream(ApplicationStatus.values())
+                .collect(Collectors.toMap(s -> s, s -> 0L, (a, b) -> a, () -> new EnumMap<>(ApplicationStatus.class)));
+
+        jobApplicationRepository.countApplicationsByStatus()
+                .forEach(res -> stats.put(res.getStatus(), res.getCount()));
+
+        return stats;
     }
 
     @Transactional

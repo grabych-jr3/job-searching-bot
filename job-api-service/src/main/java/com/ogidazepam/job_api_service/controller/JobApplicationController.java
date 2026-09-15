@@ -52,4 +52,9 @@ public class JobApplicationController {
         Page<ApplyResponse> applyResponsePage = jobApplicationService.getApplication(status, pageable);
         return ResponseEntity.ok(applyResponsePage);
     }
+
+    @GetMapping("/stats")
+    public ResponseEntity<java.util.Map<ApplicationStatus, Long>> getApplicationStats(){
+        return ResponseEntity.ok(jobApplicationService.getApplicationStats());
+    }
 }

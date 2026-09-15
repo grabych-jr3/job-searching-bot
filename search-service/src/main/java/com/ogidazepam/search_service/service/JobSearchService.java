@@ -18,7 +18,6 @@ public class JobSearchService {
 
     private final List<JobSearcher> jobSearchers;
     private final KafkaProducerService<JobOfferEvent> kafkaProducerService;
-    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
     public JobSearchService(List<JobSearcher> jobSearchers, KafkaProducerService<JobOfferEvent> kafkaProducerService) {
         this.jobSearchers = jobSearchers;
@@ -30,7 +29,7 @@ public class JobSearchService {
                 jobSearchers.size(), event.taskId(), event.analyzeRequest().technology(),
                 event.analyzeRequest().experience(), event.analyzeRequest().workMode());
 
-        try {
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             List<CompletableFuture<Void>> futures = jobSearchers.stream()
                     .map(searcher -> CompletableFuture.runAsync(() -> {
                         String searcherName = searcher.getClass().getSimpleName();

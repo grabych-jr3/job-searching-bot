@@ -152,29 +152,10 @@ async function loadApplications(page = 0) {
 // Fetch counts for pipeline summary strip
 async function updateStageCounters() {
     try {
-        const url = new URL(`${API_BASE_URL}/api/applications`);
-        url.searchParams.set('size', '1000'); // Sample size for overview metrics
-        const res = await fetch(url.toString());
+        const res = await fetch(`${API_BASE_URL}/api/applications/stats`);
         if (!res.ok) return;
 
-        const data = await res.json();
-        const items = Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
-
-        const counts = {
-            APPLIED: 0,
-            SCREENING: 0,
-            INTERVIEW: 0,
-            OFFER: 0,
-            REJECTED: 0,
-            NO_RESPONSE: 0
-        };
-
-        items.forEach(app => {
-            const st = (app.status || 'APPLIED').toUpperCase();
-            if (counts[st] !== undefined) {
-                counts[st]++;
-            }
-        });
+        const stats = await res.json();
 
         const idMap = {
             APPLIED: 'countApplied',
@@ -185,11 +166,10 @@ async function updateStageCounters() {
             NO_RESPONSE: 'countNoResponse'
         };
 
-        Object.keys(counts).forEach(st => {
-            const elementId = idMap[st] || `count${st.charAt(0) + st.slice(1).toLowerCase()}`;
+        Object.entries(idMap).forEach(([statusKey, elementId]) => {
             const el = document.getElementById(elementId);
             if (el) {
-                el.textContent = String(counts[st]);
+                el.textContent = String(stats[statusKey] ?? 0);
             }
         });
     } catch (err) {
