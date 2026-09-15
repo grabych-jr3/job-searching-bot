@@ -11,6 +11,7 @@ An AI-powered, event-driven microservice platform that parses IT job vacancy por
 * **📡 Real-Time Live Streaming (SSE)**: Streams analyzed vacancies to the user's browser in real time over **Server-Sent Events (SSE)** powered by Redis Pub/Sub.
 * **🔄 Event-Driven Architecture**: Decoupled microservices communicating asynchronously over **Apache Kafka** with retry topics and Dead Letter Topics (DLT).
 * **⚡ Multi-Tier Redis Caching**: Caches raw resume byte arrays, structured candidate profiles, and historical offer match results to prevent redundant AI queries and scraper loads.
+* **🎯 Built-In Job Application Tracker**: Complete hiring funnel to manage job applications across 6 distinct stages (`APPLIED`, `SCREENING`, `INTERVIEW`, `OFFER`, `REJECTED`, `NO_RESPONSE`) with 1-click apply logging, custom recruiter notes, multi-card URL synchronization, and real-time SQL aggregation stats.
 * **📊 Offer History & Advanced Filtering**: PostgreSQL persistence of analyzed offers with company name tracking, keyword search, score tier filtering, and paginated history.
 * **🐳 Fully Dockerized**: Pre-configured Docker multi-stage builds, Nginx static frontend, PostgreSQL, Redis, Apache Kafka (KRaft mode), and Kafka UI dashboard.
 
@@ -21,11 +22,11 @@ An AI-powered, event-driven microservice platform that parses IT job vacancy por
 ```mermaid
 flowchart TD
     subgraph Client ["Client Browser"]
-        UI["Web Frontend (Nginx :80 / :5500)"]
+        UI["Web Frontend (Nginx :80 / :5500)\n• Home Landing\n• AI Analyzer\n• Offer History\n• Application Tracker"]
     end
 
     subgraph CoreServices ["Microservices Ecosystem"]
-        API["job-api-service (:8081)\n• Task Dispatcher\n• CV Validation & Hashing\n• SSE Notification Manager\n• PostgreSQL Data Access"]
+        API["job-api-service (:8081)\n• Task Dispatcher & SSE Hub\n• CV Validation & Hashing\n• Analyzed Offers Storage\n• Job Application Pipeline & Stats"]
         SEARCH["search-service (:8082)\n• Multi-portal Scrapers\n• Virtual Threads Executor\n• HTML Sanitization"]
         ANALYZER["analyzer-service\n• PDF Text Extraction\n• Gemini LLM Analysis\n• Offer Batching Engine"]
     end
@@ -33,7 +34,7 @@ flowchart TD
     subgraph MessagingAndCache ["Messaging & Caching Infrastructure"]
         KAFKA{{"Apache Kafka 4.0\n• tasks-topic\n• found-offers-topic\n• completed-offers-topic"}}
         REDIS[("Redis Cache\n• CV File Bytes\n• Candidate Profiles\n• Offer Results Cache\n• SSE Pub/Sub Broker")]
-        DB[("PostgreSQL 18\n• Analyzed Offers History")]
+        DB[("PostgreSQL 18\n• Analyzed Offers History\n• Job Applications")]
     end
 
     subgraph ExternalServices ["External Providers & Portals"]
@@ -45,11 +46,12 @@ flowchart TD
     UI -- "1. Upload CV & Criteria (POST /api/analyze)" --> API
     UI -- "2. Subscribe for Live Results (GET /api/tasks/{id}/stream)" --> API
     UI -- "3. Query History & Filter Offers (GET /api/history)" --> API
+    UI -- "4. Track & Manage Applications (REST /api/applications)" --> API
 
     %% API Service Flow
     API -- "Store Raw CV Bytes" --> REDIS
     API -- "Publish Task Event" --> KAFKA
-    API -- "Persist Analyzed Offers" --> DB
+    API -- "Persist Analyzed Offers & Applications" --> DB
     REDIS -. "Subscribe to SSE Channel" .-> API
 
     %% Search Service Flow
@@ -74,13 +76,14 @@ flowchart TD
 ## 🧩 Microservices Breakdown
 
 ### 1. `job-api-service` (Port: `8081`)
-* **Role**: REST API Gateway, Task Dispatcher, SSE Notification Hub, and Offer History Management.
+* **Role**: REST API Gateway, Task Dispatcher, SSE Hub, Offer History, and Application Tracker.
 * **Key Responsibilities**:
   * Validates and hashes PDF resumes (SHA-256) with a 5MB size limit.
   * Caches raw CV bytes in Redis under the `taskId`.
   * Emits task events to `tasks-topic`.
   * Listens to `completed-offers-topic` and publishes updates to Redis Pub/Sub for SSE delivery.
-  * Saves analyzed offers (including company name, job title, match score, and justification) to PostgreSQL with indexing for high-speed pagination, score filtering, and keyword search.
+  * Persists analyzed offers to PostgreSQL with indexing for high-speed pagination, score filtering, and keyword search.
+  * **Application Tracker Management**: CRUD operations for tracking job applications across pipeline stages (`APPLIED`, `SCREENING`, `INTERVIEW`, `OFFER`, `REJECTED`, `NO_RESPONSE`), notes editing, duplicate vacancy prevention, and SQL `GROUP BY` aggregation metrics (`/api/applications/stats`).
 
 ### 2. `search-service` (Port: `8082`)
 * **Role**: High-throughput scraper and data normalizer.
@@ -102,10 +105,29 @@ flowchart TD
 
 ### 4. `frontend` (Port: `80` / `5500`)
 * **Role**: Responsive Web Client served via Nginx.
-* **Key Responsibilities**:
-  * **Landing Page (`home.html`)**: Features overview, guidelines, and quick navigation to analysis.
-  * **AI Analyzer (`analyzer.html`)**: Resume drag-and-drop uploader, technology/experience selector, and real-time SSE offer stream with score tier badges (Urgent, High, Mid, Low) and company badges.
-  * **History Page (`history.html`)**: Search, score range filters, sort orders, and paginated archive of past evaluations.
+* **Key Modules**:
+  * **Landing Page (`homePage/home.html`)**: Product overview, resume upload guidelines, feature highlights, and navigation.
+  * **AI Analyzer (`homePage/analyzer.html`)**: Resume drag-and-drop uploader, technology/seniority selectors, real-time SSE stream, score tier badges, and 1-click "Mark as applied" integration.
+  * **History Page (`historyPage/history.html`)**: Search, score range filters, sort orders, paginated archive of past evaluations, and synchronized application status buttons.
+  * **Applications Tracker (`applicationsPage/applications.html`)**: Kanban-style funnel overview with real-time status metric counters, stage filtering tabs, editable notes modal, stage dropdown transitions, and direct vacancy links.
+
+---
+
+## 📋 REST API Endpoints
+
+### Analysis & Tasks
+* `POST /api/analyze` — Upload PDF CV with technology, seniority, and work mode filters to initiate an analysis task.
+* `GET /api/tasks/{taskId}/stream` — Connect to the SSE live stream for real-time analyzed vacancy events.
+
+### Offer History
+* `GET /api/history` — Fetch paginated, searchable, and filtered historical offer results.
+
+### Application Tracker
+* `POST /api/applications` — Log a new job application (from Analyzer, History, or manual input).
+* `GET /api/applications` — Fetch paginated applications (optional `status` filter, search query, sorting).
+* `GET /api/applications/stats` — Fast SQL-aggregated counts of active applications grouped by stage (`APPLIED`, `SCREENING`, `INTERVIEW`, `OFFER`, `REJECTED`, `NO_RESPONSE`).
+* `PATCH /api/applications/{id}/change-status` — Update application stage.
+* `PATCH /api/applications/{id}/addNotes` — Update recruiter notes, salary expectations, or interview logs.
 
 ---
 
@@ -217,4 +239,4 @@ If you prefer to run services individually for local development:
    ```
 
 3. **Open Frontend**:
-   Open `frontend/index.html` using VS Code Live Server (`http://localhost:5500`) or open `frontend/homePage/home.html` in your browser.
+   Open `frontend/homePage/home.html` or `frontend/index.html` using VS Code Live Server (`http://localhost:5500`) or directly in your browser.
