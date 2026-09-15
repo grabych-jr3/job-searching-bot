@@ -209,7 +209,7 @@ function getStatusBadgeLabel(status) {
         case 'INTERVIEW': return 'Interview';
         case 'OFFER': return 'Offer 🎉';
         case 'REJECTED': return 'Rejected';
-        case 'ARCHIVED': return 'Archived';
+        case 'NO_RESPONSE': return 'No Response';
         default: return null;
     }
 }

@@ -69,7 +69,7 @@ function getStatusLabel(status) {
         case 'INTERVIEW': return 'Interview';
         case 'OFFER': return 'Offer 🎉';
         case 'REJECTED': return 'Rejected';
-        case 'ARCHIVED': return 'Archived';
+        case 'NO_RESPONSE': return 'No Response';
         default: return status;
     }
 }
@@ -166,7 +166,7 @@ async function updateStageCounters() {
             INTERVIEW: 0,
             OFFER: 0,
             REJECTED: 0,
-            ARCHIVED: 0
+            NO_RESPONSE: 0
         };
 
         items.forEach(app => {
@@ -176,8 +176,18 @@ async function updateStageCounters() {
             }
         });
 
+        const idMap = {
+            APPLIED: 'countApplied',
+            SCREENING: 'countScreening',
+            INTERVIEW: 'countInterview',
+            OFFER: 'countOffer',
+            REJECTED: 'countRejected',
+            NO_RESPONSE: 'countNoResponse'
+        };
+
         Object.keys(counts).forEach(st => {
-            const el = document.getElementById(`count${st.charAt(0) + st.slice(1).toLowerCase()}`);
+            const elementId = idMap[st] || `count${st.charAt(0) + st.slice(1).toLowerCase()}`;
+            const el = document.getElementById(elementId);
             if (el) {
                 el.textContent = String(counts[st]);
             }
@@ -392,7 +402,7 @@ function renderApplications() {
             <option value="INTERVIEW" ${status === 'INTERVIEW' ? 'selected' : ''}>Interview</option>
             <option value="OFFER" ${status === 'OFFER' ? 'selected' : ''}>Offer 🎉</option>
             <option value="REJECTED" ${status === 'REJECTED' ? 'selected' : ''}>Rejected</option>
-            <option value="ARCHIVED" ${status === 'ARCHIVED' ? 'selected' : ''}>Archived</option>
+            <option value="NO_RESPONSE" ${status === 'NO_RESPONSE' ? 'selected' : ''}>No Response</option>
         `;
 
         statusSelect.addEventListener('change', async (e) => {

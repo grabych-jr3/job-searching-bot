@@ -253,7 +253,7 @@ body {
 .dot-interview { background: var(--warning); box-shadow: 0 0 6px rgba(245, 158, 11, 0.5); }
 .dot-offer { background: var(--success); box-shadow: 0 0 6px rgba(22, 163, 74, 0.5); }
 .dot-rejected { background: var(--danger); box-shadow: 0 0 6px rgba(220, 38, 38, 0.5); }
-.dot-archived { background: var(--muted); box-shadow: 0 0 6px rgba(100, 116, 139, 0.5); }
+.dot-no_response, .dot-no-response { background: var(--muted); box-shadow: 0 0 6px rgba(100, 116, 139, 0.5); }
 
 .stage-name {
     font-size: 0.84rem;
@@ -455,7 +455,7 @@ body {
 .app-card.stage-interview { border-left: 4px solid var(--warning); }
 .app-card.stage-offer { border-left: 4px solid var(--success); background: linear-gradient(180deg, rgba(22, 163, 74, 0.03) 0%, #ffffff 100%); }
 .app-card.stage-rejected { border-left: 4px solid var(--danger); opacity: 0.88; }
-.app-card.stage-archived { border-left: 4px solid var(--muted); opacity: 0.8; }
+.app-card.stage-no_response, .app-card.stage-no-response { border-left: 4px solid var(--muted); opacity: 0.8; }
 
 .app-header {
     display: flex;
@@ -527,7 +527,7 @@ body {
 .stage-badge.badge-interview { background: rgba(245, 158, 11, 0.1); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.35); }
 .stage-badge.badge-offer { background: rgba(22, 163, 74, 0.12); color: var(--success); border: 1px solid rgba(22, 163, 74, 0.35); }
 .stage-badge.badge-rejected { background: rgba(220, 38, 38, 0.1); color: var(--danger); border: 1px solid rgba(220, 38, 38, 0.3); }
-.stage-badge.badge-archived { background: rgba(100, 116, 139, 0.1); color: var(--muted); border: 1px solid rgba(100, 116, 139, 0.3); }
+.stage-badge.badge-no_response, .stage-badge.badge-no-response { background: rgba(100, 116, 139, 0.1); color: var(--muted); border: 1px solid rgba(100, 116, 139, 0.3); }
 
 /* Notes Section */
 .app-notes-section {
@@ -717,7 +717,7 @@ body {
 .app-status-select.sel-interview { background-color: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.35); color: #d97706; }
 .app-status-select.sel-offer { background-color: rgba(22, 163, 74, 0.1); border-color: rgba(22, 163, 74, 0.35); color: var(--success); }
 .app-status-select.sel-rejected { background-color: rgba(220, 38, 38, 0.08); border-color: rgba(220, 38, 38, 0.3); color: var(--danger); }
-.app-status-select.sel-archived { background-color: rgba(100, 116, 139, 0.08); border-color: rgba(100, 116, 139, 0.3); color: var(--muted); }
+.app-status-select.sel-no_response, .app-status-select.sel-no-response { background-color: rgba(100, 116, 139, 0.08); border-color: rgba(100, 116, 139, 0.3); color: var(--muted); }
 
 .app-status-select:disabled,
 .app-status-select.is-updating {

@@ -27,6 +27,155 @@ let taskStream = null;
 let offerResults = [];
 let activeFilter = 'all';
 
+const appliedApplicationsMap = new Map(); // offerUrl -> status
+
+let toastTimeout = null;
+function showToast(message, type = 'success') {
+    let toastEl = document.getElementById('analyzerToast');
+    if (!toastEl) {
+        toastEl = document.createElement('div');
+        toastEl.id = 'analyzerToast';
+        toastEl.className = 'analyzer-toast';
+        document.body.appendChild(toastEl);
+    }
+
+    toastEl.textContent = message;
+    toastEl.className = `analyzer-toast show ${type}`;
+
+    if (toastTimeout) {
+        clearTimeout(toastTimeout);
+    }
+
+    toastTimeout = setTimeout(() => {
+        toastEl.classList.remove('show');
+    }, 3500);
+}
+
+async function fetchAppliedApplications() {
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/applications?size=1000`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const items = Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
+        items.forEach(item => {
+            if (item.offerUrl) {
+                appliedApplicationsMap.set(item.offerUrl, item.status || 'APPLIED');
+            }
+        });
+    } catch {
+        // Non-critical background fetch failure
+    }
+}
+
+function getEffectiveStatus(offer) {
+    if (!offer) return null;
+    const url = offer.offerUrl || offer.url;
+    const trackedStatus = (offer.status && offer.status !== 'null') ? offer.status : appliedApplicationsMap.get(url);
+    if (!trackedStatus) return null;
+    const s = String(trackedStatus).toUpperCase();
+    if (s === 'NEW' || s === 'ACTIVE') return null;
+    return s;
+}
+
+function getStatusBadgeLabel(status) {
+    if (!status) return null;
+    const s = String(status).toUpperCase();
+    switch (s) {
+        case 'APPLIED': return 'Applied';
+        case 'SCREENING': return 'Screening';
+        case 'INTERVIEW': return 'Interview';
+        case 'OFFER': return 'Offer 🎉';
+        case 'REJECTED': return 'Rejected';
+        case 'NO_RESPONSE': return 'No Response';
+        default: return null;
+    }
+}
+
+async function markOfferAsApplied(safeUrl, safeTitle, safeCompanyName) {
+    if (!safeUrl || safeUrl === '#') {
+        showToast('Invalid vacancy URL.', 'error');
+        return;
+    }
+
+    const allButtonsForUrl = document.querySelectorAll(`button[data-apply-url="${CSS.escape(safeUrl)}"]`);
+    allButtonsForUrl.forEach(btn => {
+        btn.disabled = true;
+        btn.innerHTML = '<span>Saving...</span>';
+    });
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/applications`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                offerUrl: safeUrl,
+                jobTitle: safeTitle,
+                companyName: safeCompanyName
+            })
+        });
+
+        if (!response.ok) {
+            let errorMsg = `HTTP ${response.status}`;
+            try {
+                const text = await response.text();
+                if (text) {
+                    try {
+                        const parsed = JSON.parse(text);
+                        errorMsg = parsed.message || parsed.error || errorMsg;
+                    } catch {
+                        errorMsg = text.length < 120 ? text : errorMsg;
+                    }
+                }
+            } catch {}
+            throw new Error(errorMsg);
+        }
+
+        try {
+            await fetch(`${API_BASE_URL}/api/history/mark-as-applied?offerUrl=${encodeURIComponent(safeUrl)}`, {
+                method: 'PATCH'
+            });
+        } catch {
+            // Non-critical if backend synchronizes automatically
+        }
+
+        appliedApplicationsMap.set(safeUrl, 'APPLIED');
+
+        offerResults.forEach(o => {
+            if ((o.offerUrl || o.url) === safeUrl) {
+                o.status = 'APPLIED';
+            }
+        });
+
+        allButtonsForUrl.forEach(btn => {
+            btn.className = 'offer-apply-btn is-applied status-applied';
+            btn.disabled = true;
+            btn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Applied</span>
+            `;
+        });
+
+        showToast(`Marked as applied for "${safeTitle}"!`, 'success');
+    } catch (error) {
+        console.error('Failed to mark offer as applied:', error);
+        allButtonsForUrl.forEach(btn => {
+            btn.disabled = false;
+            btn.className = 'offer-apply-btn';
+            btn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Mark as applied</span>
+            `;
+        });
+        showToast(`Failed to record application: ${error.message || 'Please try again.'}`, 'error');
+    }
+}
+
 function closeTaskStream() {
     if (taskStream) {
         taskStream.close();
@@ -144,6 +293,7 @@ function renderFilteredCards() {
 
         card.className = `offer-card ${scoreTier}`;
         card.dataset.score = String(normalizedScore);
+        card.dataset.offerUrl = safeUrl;
 
         if (isNewOffer) {
             const newBadge = document.createElement('span');
@@ -189,6 +339,9 @@ function renderFilteredCards() {
         reason.className = 'offer-reason';
         reason.textContent = safeReason;
 
+        const actionsRow = document.createElement('div');
+        actionsRow.className = 'offer-actions';
+
         const actionLink = document.createElement('a');
         actionLink.className = 'offer-link-btn';
         actionLink.href = safeUrl;
@@ -202,10 +355,45 @@ function renderFilteredCards() {
                 <line x1="10" y1="14" x2="21" y2="3"></line>
             </svg>
         `;
+        actionsRow.appendChild(actionLink);
+
+        const effectiveStatus = getEffectiveStatus(offerResult);
+        const isAppliedOrBeyond = Boolean(effectiveStatus);
+
+        const applyBtn = document.createElement('button');
+        applyBtn.type = 'button';
+        applyBtn.dataset.applyUrl = safeUrl;
+
+        if (isAppliedOrBeyond) {
+            const statusLabel = getStatusBadgeLabel(effectiveStatus) || 'Applied';
+            const statusClass = `status-${effectiveStatus.toLowerCase()}`;
+            applyBtn.className = `offer-apply-btn is-applied ${statusClass}`;
+            applyBtn.disabled = true;
+            applyBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>${statusLabel}</span>
+            `;
+        } else {
+            applyBtn.className = 'offer-apply-btn';
+            applyBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Mark as applied</span>
+            `;
+            applyBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                await markOfferAsApplied(safeUrl, safeJobTitle, safeCompanyName);
+            });
+        }
+        actionsRow.appendChild(applyBtn);
 
         card.appendChild(header);
         card.appendChild(reason);
-        card.appendChild(actionLink);
+        card.appendChild(actionsRow);
         resultsContainer.appendChild(card);
     });
 }
@@ -752,6 +940,8 @@ form.addEventListener('submit', async (event) => {
     clearResults();
 
     try {
+        await fetchAppliedApplications();
+
         const params = buildAnalyzeRequestParams();
         const requestUrl = new URL(`${API_BASE_URL}/api/analyze`);
         requestUrl.search = params.toString();
@@ -794,3 +984,7 @@ form.addEventListener('submit', async (event) => {
         submitBtnText.textContent = 'Start AI Analysis';
     }
 });
+
+// Initial load of tracked applications
+fetchAppliedApplications();
+
