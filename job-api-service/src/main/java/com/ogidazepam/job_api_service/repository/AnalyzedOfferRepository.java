@@ -1,6 +1,7 @@
 package com.ogidazepam.job_api_service.repository;
 
 import com.ogidazepam.job_api_service.model.entity.AnalyzedOffer;
+import com.ogidazepam.job_api_service.model.enums.ApplicationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,8 +33,8 @@ public interface AnalyzedOfferRepository extends JpaRepository<AnalyzedOffer, Lo
 
     @Modifying
     @Query(value = """
-        INSERT INTO analyzed_offer (offer_url, cv_hash, job_title, company_name, reason, score, analyzed_at)
-        VALUES (:offerUrl, :cvHash, :jobTitle, :companyName, :reason, :score, NOW())
+        INSERT INTO analyzed_offer (offer_url, cv_hash, job_title, company_name, reason, score, status, analyzed_at)
+        VALUES (:offerUrl, :cvHash, :jobTitle, :companyName, :reason, :score, :status, NOW())
         ON CONFLICT (cv_hash, offer_url) DO NOTHING
     """, nativeQuery = true)
     void insertIfNotExists(
@@ -42,6 +43,16 @@ public interface AnalyzedOfferRepository extends JpaRepository<AnalyzedOffer, Lo
             @Param("jobTitle") String jobTitle,
             @Param("companyName") String companyName,
             @Param("reason") String reason,
-            @Param("score") int score
+            @Param("score") int score,
+            @Param("status") String status
+    );
+
+    @Modifying
+    @Query("""
+    UPDATE AnalyzedOffer SET status = :status WHERE offerUrl = :offerUrl
+    """)
+    void changeStatus(
+            @Param("status") ApplicationStatus status,
+            @Param("offerUrl") String offerUrl
     );
 }

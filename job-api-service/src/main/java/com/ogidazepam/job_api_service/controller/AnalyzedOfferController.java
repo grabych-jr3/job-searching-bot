@@ -33,13 +33,19 @@ public class AnalyzedOfferController {
         return ResponseEntity.ok(history);
     }
 
+    @PatchMapping("/mark-as-applied")
+    public ResponseEntity<Void> markAsApplied(@RequestParam String offerUrl){
+        analyzedOfferService.markAsApplied(offerUrl);
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping()
     public ResponseEntity<Void> deleteCustomerHistory(){
         analyzedOfferService.deleteAll();
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOfferFromHistory(@PathVariable Long id){
         analyzedOfferService.deleteOffer(id);
         return ResponseEntity.noContent().build();

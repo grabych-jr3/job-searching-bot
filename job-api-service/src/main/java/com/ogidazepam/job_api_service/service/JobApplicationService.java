@@ -6,6 +6,7 @@ import com.ogidazepam.job_api_service.model.enums.ApplicationStatus;
 import com.ogidazepam.job_api_service.model.request.ApplicationNotesRequest;
 import com.ogidazepam.job_api_service.model.request.ApplyRequest;
 import com.ogidazepam.job_api_service.model.response.ApplyResponse;
+import com.ogidazepam.job_api_service.repository.AnalyzedOfferRepository;
 import com.ogidazepam.job_api_service.repository.JobApplicationRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,9 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class JobApplicationService {
 
+    private final AnalyzedOfferRepository analyzedOfferRepository;
     private final JobApplicationRepository jobApplicationRepository;
 
-    public JobApplicationService(JobApplicationRepository jobApplicationRepository) {
+    public JobApplicationService(AnalyzedOfferRepository analyzedOfferRepository, JobApplicationRepository jobApplicationRepository) {
+        this.analyzedOfferRepository = analyzedOfferRepository;
         this.jobApplicationRepository = jobApplicationRepository;
     }
 
@@ -35,6 +38,7 @@ public class JobApplicationService {
                 .orElseThrow(() -> new ResourceNotFoundException("JobApplication by id " + id + " was not found"));
 
         jobApplication.setStatus(status);
+        analyzedOfferRepository.changeStatus(status, jobApplication.getOfferUrl());
     }
 
     @Transactional(readOnly = true)

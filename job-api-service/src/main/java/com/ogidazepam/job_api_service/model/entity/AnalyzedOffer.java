@@ -1,5 +1,6 @@
 package com.ogidazepam.job_api_service.model.entity;
 
+import com.ogidazepam.job_api_service.model.enums.ApplicationStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -47,6 +48,9 @@ public class AnalyzedOffer {
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String reason;
+
+    @Enumerated(EnumType.STRING)
+    private ApplicationStatus status;
 
     @CreationTimestamp
     private OffsetDateTime analyzedAt;
