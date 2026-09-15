@@ -43,13 +43,13 @@
         <section class="hero-section">
             <div class="hero-badge">
                 <span class="pulse-dot"></span>
-                <span>AI-Powered Career Intelligence & Vacancy Scraping</span>
+                <span>AI-Powered Career Intelligence & Job Matching</span>
             </div>
             <h1 class="hero-title">
                 Match Your Resume to <span class="gradient-text">Top Tech Jobs</span> with Precision AI
             </h1>
             <p class="hero-subtitle">
-                Upload your CV in PDF format. Our distributed microservice architecture scrapes real-time listings from <strong>JustJoin IT</strong>, <strong>BulldogJob</strong>, and <strong>Pracuj.pl</strong>, evaluates match suitability from 0% to 100% using <strong>Google Gemini LLMs</strong>, and streams recruiter-grade justifications straight to your screen.
+                Upload your CV in PDF format. We search real-time listings across top job boards including <strong>JustJoin IT</strong>, <strong>BulldogJob</strong>, and <strong>Pracuj.pl</strong>, evaluate match suitability from 0% to 100% using intelligent AI analysis, and deliver recruiter-grade feedback straight to your screen.
             </p>
 
             <div class="hero-cta-group">
@@ -59,12 +59,18 @@
                     </svg>
                     <span>Launch Job Analyzer</span>
                 </a>
+                <a href="../applicationsPage/applications.html" class="btn btn-secondary btn-large">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                    </svg>
+                    <span>Track Applications</span>
+                </a>
                 <a href="../historyPage/history.html" class="btn btn-secondary btn-large">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
-                    <span>View Offer History</span>
+                    <span>Offer History</span>
                 </a>
             </div>
 
@@ -77,7 +83,7 @@
                 <div class="stat-divider"></div>
                 <div class="stat-item">
                     <span class="stat-number">3+</span>
-                    <span class="stat-label">Major IT Portals Scraped</span>
+                    <span class="stat-label">Major IT Portals Scanned</span>
                 </div>
                 <div class="stat-divider"></div>
                 <div class="stat-item">
@@ -87,7 +93,7 @@
                 <div class="stat-divider"></div>
                 <div class="stat-item">
                     <span class="stat-number">Real-Time</span>
-                    <span class="stat-label">SSE Event Streaming</span>
+                    <span class="stat-label">Instant Live Updates</span>
                 </div>
             </div>
         </section>
@@ -96,7 +102,7 @@
         <section class="section how-it-works-section">
             <div class="section-header">
                 <h2 class="section-title">How It Works</h2>
-                <p class="section-subtitle">A reactive, event-driven pipeline powered by Spring Boot, Apache Kafka, Redis, and Google Gemini AI.</p>
+                <p class="section-subtitle">A seamless matching and tracking experience designed to land your next role faster.</p>
             </div>
 
             <div class="pipeline-grid">
@@ -112,7 +118,7 @@
                         </svg>
                     </div>
                     <h3>Upload & Extract CV</h3>
-                    <p>Upload your text-based PDF resume (up to 5MB). Apache PDFBox extracts the raw text and Gemini AI parses your skills, experience, projects, and education into a structured profile.</p>
+                    <p>Upload your PDF resume (up to 5MB). Our AI automatically extracts and structures your skills, work experience, projects, and education into a clear candidate profile.</p>
                 </div>
 
                 <div class="pipeline-card">
@@ -123,8 +129,8 @@
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
                     </div>
-                    <h3>Concurrent Scraping</h3>
-                    <p>Our search microservice runs parallel scrapers across JustJoin IT, BulldogJob, and Pracuj.pl using Java 21 Virtual Threads, filtering by your selected tech, experience level, and work mode.</p>
+                    <h3>Real-Time Search</h3>
+                    <p>We simultaneously search active vacancy listings across JustJoin IT, BulldogJob, and Pracuj.pl, filtering by your selected tech stack, experience level, and work mode.</p>
                 </div>
 
                 <div class="pipeline-card">
@@ -134,8 +140,8 @@
                             <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
                         </svg>
                     </div>
-                    <h3>AI Recruiter Evaluation</h3>
-                    <p>Gemini LLM acts as an expert technical recruiter, comparing candidate competencies against vacancy criteria, checking city distances/commutes, and assigning a 0-100 score with concise rationale.</p>
+                    <h3>AI Suitability Evaluation</h3>
+                    <p>Our AI evaluates your profile against every vacancy, comparing your core skills, required experience, and location preferences to deliver an objective 0–100% score with clear rationale.</p>
                 </div>
 
                 <div class="pipeline-card">
@@ -145,9 +151,76 @@
                             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
                         </svg>
                     </div>
-                    <h3>Real-Time Streaming & History</h3>
-                    <p>Analyzed offers are published via Kafka and streamed immediately to your browser through Server-Sent Events (SSE). Results are persisted in PostgreSQL for ongoing tracking and filtering.</p>
+                    <h3>Live Results & Tracking</h3>
+                    <p>Matching offers appear directly on your screen with actionable feedback. Save top matches to history and track every application through to the final offer.</p>
                 </div>
+            </div>
+        </section>
+
+        <!-- Application Tracking Showcase Section -->
+        <section class="section tracker-showcase-section">
+            <div class="section-header">
+                <div class="hero-badge tracker-pill">
+                    <span class="pulse-dot"></span>
+                    <span>Full Recruitment Funnel</span>
+                </div>
+                <h2 class="section-title">Built-In <span class="gradient-text">Job Application Tracker</span></h2>
+                <p class="section-subtitle">Take high-scoring AI vacancy matches all the way to a signed offer. Track interview progress across stages, write recruiter notes, and monitor your conversion pipeline in real time.</p>
+            </div>
+
+            <div class="tracker-features-grid">
+                <div class="tracker-feature-card">
+                    <div class="tracker-card-icon applied-accent">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+                    <h3>1-Click Application Logging</h3>
+                    <p>Mark vacancies as applied directly from the Analyzer or History with a single click. Status automatically syncs across all duplicate listings.</p>
+                </div>
+
+                <div class="tracker-feature-card">
+                    <div class="tracker-card-icon stage-accent">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                        </svg>
+                    </div>
+                    <h3>Multi-Stage Pipeline</h3>
+                    <p>Track hiring progression through <strong>Applied</strong>, <strong>Screening</strong>, <strong>Interview</strong>, <strong>Offer</strong>, <strong>Rejected</strong>, and <strong>No Response</strong> stages.</p>
+                </div>
+
+                <div class="tracker-feature-card">
+                    <div class="tracker-card-icon notes-accent">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </div>
+                    <h3>Recruiter Notes & Interview Logs</h3>
+                    <p>Keep salary negotiations, interview schedules, recruiter contacts, and feedback notes organized inside each application card.</p>
+                </div>
+
+                <div class="tracker-feature-card">
+                    <div class="tracker-card-icon stats-accent">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                    </div>
+                    <h3>Real-Time Stage Summaries</h3>
+                    <p>Live summary counters give you instant, clear visibility into every stage of your active job hunt pipeline at a glance.</p>
+                </div>
+            </div>
+
+            <div class="tracker-cta-row">
+                <a href="../applicationsPage/applications.html" class="btn btn-primary btn-large">
+                    <span>Explore Application Tracker</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </a>
             </div>
         </section>
 
@@ -196,18 +269,18 @@
         <!-- Supported Tech & Filters -->
         <section class="section tech-section">
             <div class="section-header">
-                <h2 class="section-title">Supported Technologies & Portals</h2>
-                <p class="section-subtitle">Tailored specifically for modern software engineering and IT roles in Europe.</p>
+                <h2 class="section-title">Supported Roles & Portals</h2>
+                <p class="section-subtitle">Tailored specifically for modern software engineering and IT roles across Europe.</p>
             </div>
 
             <div class="tech-tags-wrapper">
-                <div class="tech-tag">☕ Java / Spring</div>
+                <div class="tech-tag">☕ Java & JVM Ecosystem</div>
                 <div class="tech-tag">⚡ JavaScript / TypeScript</div>
-                <div class="tech-tag">🐍 Python / Django / FastAPI</div>
-                <div class="tech-tag">🔷 .NET / C#</div>
+                <div class="tech-tag">🐍 Python & Data Engineering</div>
+                <div class="tech-tag">🔷 .NET & C#</div>
                 <div class="tech-tag">🐹 Go (Golang)</div>
-                <div class="tech-tag">⚙️ C / C++</div>
-                <div class="tech-tag">🐘 PHP / Laravel / Symfony</div>
+                <div class="tech-tag">⚙️ C / C++ & Embedded</div>
+                <div class="tech-tag">🐘 PHP & Modern Frameworks</div>
             </div>
 
             <div class="portals-strip">
@@ -218,36 +291,36 @@
             </div>
         </section>
 
-        <!-- Resume Guidelines Section (To prevent backend exceptions) -->
+        <!-- Resume Guidelines Section -->
         <section class="section guidelines-section">
             <div class="section-header">
                 <h2 class="section-title">Resume Upload Guidelines</h2>
-                <p class="section-subtitle">Ensure smooth AI analysis by adhering to the following document requirements:</p>
+                <p class="section-subtitle">Ensure smooth and accurate analysis by following these recommendations:</p>
             </div>
 
             <div class="guidelines-grid">
                 <div class="guideline-card">
                     <div class="guideline-icon success-icon">✓</div>
                     <h4>Text-Searchable PDF</h4>
-                    <p>Upload a clean PDF exported directly from Word, Google Docs, or Canva. Selectable text allows 100% extraction accuracy.</p>
+                    <p>Upload a clean PDF exported directly from Word, Google Docs, or Canva. Selectable text ensures maximum extraction accuracy.</p>
                 </div>
 
                 <div class="guideline-card">
                     <div class="guideline-icon warning-icon">!</div>
                     <h4>No Password Protection</h4>
-                    <p>Encrypted or password-protected PDF files cannot be analyzed by our automated engine. Please remove any passwords.</p>
+                    <p>Encrypted or password-protected PDF files cannot be analyzed. Please ensure password protection is removed.</p>
                 </div>
 
                 <div class="guideline-card">
                     <div class="guideline-icon warning-icon">!</div>
                     <h4>Avoid Image-Only Scans</h4>
-                    <p>Scanned camera photos or pure raster image PDFs lack machine-readable text layers. Ensure text can be highlighted.</p>
+                    <p>Scanned camera photos or pure raster image PDFs lack selectable text layers. Ensure your document text can be highlighted.</p>
                 </div>
 
                 <div class="guideline-card">
                     <div class="guideline-icon success-icon">✓</div>
                     <h4>Size Limit: Max 5MB</h4>
-                    <p>Files up to 5MB are accepted and cached in Redis for fast multi-batch evaluation against concurrent scrapers.</p>
+                    <p>PDF documents up to 5MB are accepted for fast, high-accuracy candidate profile parsing and instant matching.</p>
                 </div>
             </div>
         </section>
@@ -284,7 +357,7 @@
                     </svg>
                     <span>Job Analyzer</span>
                 </div>
-                <p>AI-driven job vacancy scraper & match analyzer microservice platform.</p>
+                <p>AI-powered job search assistant, match evaluator, and recruitment pipeline tracker.</p>
             </div>
 
             <div class="footer-links">
@@ -293,17 +366,19 @@
                     <a href="home.html">Home</a>
                     <a href="analyzer.html">Analyze CV</a>
                     <a href="../historyPage/history.html">Offer History</a>
+                    <a href="../applicationsPage/applications.html">Applications Tracker</a>
                 </div>
                 <div class="link-column">
-                    <h4>Tech Stack</h4>
-                    <span>Spring Boot 4.1 & Java 21</span>
-                    <span>Spring AI & Google Gemini</span>
-                    <span>Apache Kafka & Redis</span>
+                    <h4>Core Features</h4>
+                    <span>AI Resume Parsing</span>
+                    <span>0–100% Match Scoring</span>
+                    <span>Multi-Stage Application Pipeline</span>
+                    <span>Real-Time Job Aggregation</span>
                 </div>
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2026 Job Analyzer Bot. All rights reserved.</p>
+            <p>&copy; 2026 Job Analyzer. All rights reserved.</p>
         </div>
     </footer>
 

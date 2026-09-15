@@ -642,16 +642,16 @@ function mapBackendException(rawError) {
         };
     }
 
-    // 6. Gemini AI Safety or Parsing Issue
+    // 6. AI Parsing Issue
     if (errorStr.includes('gemini') || errorStr.includes('safety') || errorStr.includes('candidate profile')) {
         return {
             category: 'AI Parsing Issue',
-            title: 'AI Model Encountered a Parsing Restriction',
-            message: 'The Google Gemini AI parser was unable to structure your resume into standardized candidate sections.',
+            title: 'AI Encountered a Parsing Restriction',
+            message: 'The AI parser was unable to structure your resume into standardized candidate sections.',
             tips: [
                 'Ensure your resume contains clear headings: Experience, Skills, Education, Projects.',
                 'Avoid unusual character encodings or non-standard symbols in your document.',
-                'Re-run the analysis in a few moments if this was a transient AI service blip.'
+                'Re-run the analysis in a few moments if this was a temporary issue.'
             ]
         };
     }
@@ -675,7 +675,7 @@ function mapBackendException(rawError) {
         message: rawError || 'An unexpected error occurred during resume processing or vacancy analysis.',
         tips: [
             'Check that your resume is a clean, text-based PDF under 5MB.',
-            'Ensure the backend microservices (Job API, Search Service, Analyzer Service, Kafka, Redis) are running.',
+            'Ensure the backend services are up and reachable.',
             'Click "Try Again" to re-run the analysis.'
         ]
     };
@@ -773,21 +773,21 @@ function openTaskStream(taskId) {
     clearResults();
 
     const streamUrl = `${API_BASE_URL}/api/tasks/${taskId}/stream`;
-    showStatus(`Scraping portals & evaluating vacancies with your CV (Task: ${taskId})...`, 'loading');
+    showStatus('Searching portals & evaluating vacancies with your CV...', 'loading');
     resultsContainer.innerHTML = `
         <div class="empty-state initial-empty-state">
             <div class="status loading" style="display: inline-flex; margin: 0 0 14px;">
                 Searching JustJoin IT, BulldogJob & Pracuj.pl...
             </div>
             <p class="empty-title">AI Analysis In Progress</p>
-            <p class="empty-desc">Evaluating vacancies against your skills with Gemini LLM. Matching offers will appear below in real-time.</p>
+            <p class="empty-desc">Evaluating vacancies against your skills with AI. Matching offers will appear below in real-time.</p>
         </div>
     `;
 
     taskStream = new EventSource(streamUrl);
 
     taskStream.onopen = () => {
-        showStatus(`Live SSE stream connected! Processing vacancies...`, 'loading');
+        showStatus('Connected! Processing vacancies...', 'loading');
     };
 
     taskStream.addEventListener('vacancy_analyzed', (event) => {
@@ -799,7 +799,7 @@ function openTaskStream(taskId) {
         showStatus(
             completionValue === 'FINISHED'
                 ? `Analysis completed! Found ${offerResults.length} analyzed vacancies.`
-                : `Task ${taskId} finished.`,
+                : 'Analysis finished.',
             'success'
         );
         closeTaskStream();
@@ -809,7 +809,7 @@ function openTaskStream(taskId) {
                 <div class="empty-state">
                     <p style="font-weight: 700; font-size: 1.1rem; color: var(--text); margin-bottom: 6px;">No vacancies matched your criteria</p>
                     <p style="font-size: 0.9rem; color: var(--muted); max-width: 500px; margin: 0 auto 16px;">
-                        The scrapers found 0 matching active postings for this combination of technology and experience.
+                        No active job postings were found for this combination of technology and experience.
                     </p>
                     <p style="font-size: 0.85rem; color: #4b5563;">
                         <strong>Tip:</strong> Try selecting multiple experience levels (e.g. Junior + Mid) or expanding work modes (Remote + Hybrid).
