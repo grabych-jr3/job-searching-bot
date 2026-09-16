@@ -80,6 +80,7 @@ public class JobApplicationService {
                 .offerUrl(applyRequest.offerUrl())
                 .jobTitle(applyRequest.jobTitle())
                 .companyName(applyRequest.companyName())
+                .notes(applyRequest.notes())
                 .build();
     }
 

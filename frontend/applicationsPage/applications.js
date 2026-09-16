@@ -27,6 +27,22 @@ const nextPageBtn = document.getElementById('nextPageBtn');
 const lastPageBtn = document.getElementById('lastPageBtn');
 const pageNumberButtons = document.getElementById('pageNumberButtons');
 
+// Add Application Modal DOM Elements
+const addAppModal = document.getElementById('addAppModal');
+const openAddModalBtn = document.getElementById('openAddModalBtn');
+const closeAddModalBtn = document.getElementById('closeAddModalBtn');
+const cancelAddModalBtn = document.getElementById('cancelAddModalBtn');
+const addAppForm = document.getElementById('addAppForm');
+const modalJobTitle = document.getElementById('modalJobTitle');
+const modalCompanyName = document.getElementById('modalCompanyName');
+const modalOfferUrl = document.getElementById('modalOfferUrl');
+const modalNotes = document.getElementById('modalNotes');
+const modalErrorAlert = document.getElementById('modalErrorAlert');
+const submitAddModalBtn = document.getElementById('submitAddModalBtn');
+const jobTitleError = document.getElementById('jobTitleError');
+const companyNameError = document.getElementById('companyNameError');
+const offerUrlError = document.getElementById('offerUrlError');
+
 // Toast Notification
 let toastTimeout = null;
 function showToast(message, type = 'success') {
@@ -214,14 +230,23 @@ function renderApplications() {
                         <line x1="16" y1="13" x2="8" y2="13"></line>
                         <line x1="16" y1="17" x2="8" y2="17"></line>
                     </svg>
-                    <p>No job applications tracked yet. Start analyzing vacancies and click "Apply" on your best matches in History.</p>
-                    <a href="../historyPage/history.html" class="empty-action-btn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
-                        Browse Analysis History
-                    </a>
+                    <p>No job applications tracked yet. Start analyzing vacancies, apply to matched roles, or add an external application manually.</p>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 6px;">
+                        <button type="button" class="empty-action-btn" onclick="openAddModal()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add External Application
+                        </button>
+                        <a href="../historyPage/history.html" class="empty-action-btn" style="background: transparent; border: 1px solid var(--border); color: var(--text);">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            Browse Analysis History
+                        </a>
+                    </div>
                 </div>
             `;
         }
@@ -655,6 +680,199 @@ if (lastPageBtn) {
         if (currentPage < totalPages - 1) loadApplications(totalPages - 1);
     });
 }
+
+// ==========================================
+// Modal Window Controller (Add External App)
+// ==========================================
+
+function clearModalValidation() {
+    if (modalErrorAlert) {
+        modalErrorAlert.style.display = 'none';
+        modalErrorAlert.textContent = '';
+    }
+
+    [modalJobTitle, modalCompanyName, modalOfferUrl, modalNotes].forEach((input) => {
+        if (input) input.classList.remove('has-error');
+    });
+
+    [jobTitleError, companyNameError, offerUrlError].forEach((errEl) => {
+        if (errEl) {
+            errEl.textContent = '';
+            errEl.classList.remove('visible');
+        }
+    });
+}
+
+function openAddModal() {
+    if (!addAppModal) return;
+    clearModalValidation();
+    if (addAppForm) addAppForm.reset();
+
+    addAppModal.classList.add('show');
+    addAppModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+
+    // Focus first input
+    setTimeout(() => {
+        if (modalJobTitle) modalJobTitle.focus();
+    }, 100);
+}
+
+function closeAddModal() {
+    if (!addAppModal) return;
+    addAppModal.classList.remove('show');
+    addAppModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    clearModalValidation();
+}
+
+async function handleAddApplicationSubmit(e) {
+    e.preventDefault();
+    clearModalValidation();
+
+    const jobTitle = modalJobTitle ? modalJobTitle.value.trim() : '';
+    const companyName = modalCompanyName ? modalCompanyName.value.trim() : '';
+    const offerUrl = modalOfferUrl ? modalOfferUrl.value.trim() : '';
+    const notes = modalNotes ? modalNotes.value.trim() : '';
+
+    let hasClientError = false;
+
+    if (!jobTitle) {
+        if (modalJobTitle) modalJobTitle.classList.add('has-error');
+        if (jobTitleError) {
+            jobTitleError.textContent = 'Job title is required.';
+            jobTitleError.classList.add('visible');
+        }
+        hasClientError = true;
+    }
+
+    if (!companyName) {
+        if (modalCompanyName) modalCompanyName.classList.add('has-error');
+        if (companyNameError) {
+            companyNameError.textContent = 'Company name is required.';
+            companyNameError.classList.add('visible');
+        }
+        hasClientError = true;
+    }
+
+    if (!offerUrl) {
+        if (modalOfferUrl) modalOfferUrl.classList.add('has-error');
+        if (offerUrlError) {
+            offerUrlError.textContent = 'Offer URL is required.';
+            offerUrlError.classList.add('visible');
+        }
+        hasClientError = true;
+    }
+
+    if (hasClientError) return;
+
+    // Send POST /api/applications request
+    if (submitAddModalBtn) {
+        submitAddModalBtn.disabled = true;
+        submitAddModalBtn.querySelector('span').textContent = 'Saving...';
+    }
+
+    try {
+        const payload = {
+            offerUrl,
+            jobTitle,
+            companyName,
+            notes: notes.length > 0 ? notes : null
+        };
+
+        const response = await fetch(`${API_BASE_URL}/api/applications`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            let errorMsg = `Server returned status ${response.status}`;
+            try {
+                const data = await response.json();
+                if (data.fieldErrors && typeof data.fieldErrors === 'object') {
+                    // Highlight specific invalid fields
+                    Object.entries(data.fieldErrors).forEach(([field, msg]) => {
+                        if (field === 'jobTitle' && jobTitleError) {
+                            modalJobTitle.classList.add('has-error');
+                            jobTitleError.textContent = msg;
+                            jobTitleError.classList.add('visible');
+                        } else if (field === 'companyName' && companyNameError) {
+                            modalCompanyName.classList.add('has-error');
+                            companyNameError.textContent = msg;
+                            companyNameError.classList.add('visible');
+                        } else if (field === 'offerUrl' && offerUrlError) {
+                            modalOfferUrl.classList.add('has-error');
+                            offerUrlError.textContent = msg;
+                            offerUrlError.classList.add('visible');
+                        }
+                    });
+                    errorMsg = Object.values(data.fieldErrors).join('. ');
+                } else if (data.message) {
+                    errorMsg = data.message;
+                }
+            } catch {
+                const text = await response.text();
+                if (text && text.length < 200) errorMsg = text;
+            }
+            throw new Error(errorMsg);
+        }
+
+        // Success
+        closeAddModal();
+        showToast(`Application for "${jobTitle}" at "${companyName}" added successfully!`, 'success');
+
+        // Reload data and counters
+        await loadApplications(0);
+        await updateStageCounters();
+    } catch (error) {
+        console.error('Failed to add application:', error);
+        if (modalErrorAlert) {
+            modalErrorAlert.textContent = error.message || 'Failed to save application. Please try again.';
+            modalErrorAlert.style.display = 'block';
+        }
+    } finally {
+        if (submitAddModalBtn) {
+            submitAddModalBtn.disabled = false;
+            submitAddModalBtn.querySelector('span').textContent = 'Save Application';
+        }
+    }
+}
+
+// Modal Event Listeners
+if (openAddModalBtn) {
+    openAddModalBtn.addEventListener('click', openAddModal);
+}
+
+if (closeAddModalBtn) {
+    closeAddModalBtn.addEventListener('click', closeAddModal);
+}
+
+if (cancelAddModalBtn) {
+    cancelAddModalBtn.addEventListener('click', closeAddModal);
+}
+
+if (addAppForm) {
+    addAppForm.addEventListener('submit', handleAddApplicationSubmit);
+}
+
+// Close on click outside modal content
+if (addAppModal) {
+    addAppModal.addEventListener('click', (e) => {
+        if (e.target === addAppModal) {
+            closeAddModal();
+        }
+    });
+}
+
+// Close on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && addAppModal && addAppModal.classList.contains('show')) {
+        closeAddModal();
+    }
+});
 
 // Initial Load
 document.addEventListener('DOMContentLoaded', () => {

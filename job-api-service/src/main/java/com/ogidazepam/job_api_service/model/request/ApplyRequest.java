@@ -10,6 +10,8 @@ public record ApplyRequest(
         String jobTitle,
 
         @NotBlank(message = "CompanyName is required")
-        String companyName
+        String companyName,
+
+        String notes
 ) {
 }
