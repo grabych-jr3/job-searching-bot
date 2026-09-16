@@ -417,8 +417,27 @@ function renderApplications() {
 
         statusSelectWrap.appendChild(statusSelect);
 
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'app-delete-btn';
+        deleteBtn.title = 'Delete application';
+        deleteBtn.setAttribute('aria-label', `Delete application for ${safeTitle}`);
+        deleteBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+        `;
+
+        deleteBtn.addEventListener('click', async () => {
+            await deleteApplication(appId, deleteBtn, card, app);
+        });
+
         actionsRow.appendChild(openBtn);
         actionsRow.appendChild(statusSelectWrap);
+        actionsRow.appendChild(deleteBtn);
 
         card.appendChild(header);
         card.appendChild(notesSection);
@@ -541,6 +560,71 @@ async function saveApplicationNotes(id, newNotes, cardEl, appObj, notesView, edi
     } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = 'Save Note';
+    }
+}
+
+// Delete application
+async function deleteApplication(id, deleteBtn, cardEl, appObj) {
+    if (!id) {
+        showToast('Application ID is missing.', 'error');
+        return;
+    }
+
+    const jobTitle = (appObj && (appObj.jobTitle || appObj.title)) || 'this job';
+    const company = (appObj && (appObj.companyName || appObj.company)) || '';
+    const nameLabel = company ? `"${jobTitle}" at ${company}` : `"${jobTitle}"`;
+
+    if (!window.confirm(`Are you sure you want to delete the application for ${nameLabel}?`)) {
+        return;
+    }
+
+    deleteBtn.disabled = true;
+    deleteBtn.classList.add('is-deleting');
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/applications/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok && response.status !== 204) {
+            let errorMsg = `HTTP Error ${response.status}`;
+            try {
+                const text = await response.text();
+                if (text) {
+                    try {
+                        const parsed = JSON.parse(text);
+                        errorMsg = parsed.message || parsed.error || errorMsg;
+                    } catch {
+                        errorMsg = text.length < 120 ? text : errorMsg;
+                    }
+                }
+            } catch {}
+            throw new Error(errorMsg);
+        }
+
+        showToast('Application deleted successfully.', 'info');
+
+        // Animate card removal
+        cardEl.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+        cardEl.style.opacity = '0';
+        cardEl.style.transform = 'scale(0.95)';
+
+        setTimeout(async () => {
+            // Update pipeline summary counters
+            updateStageCounters();
+
+            // If deleting the only remaining item on this page and we are beyond page 0, go back one page
+            if (resultsContainer.children.length <= 1 && currentPage > 0) {
+                currentPage--;
+            }
+            loadApplications(currentPage);
+        }, 280);
+
+    } catch (error) {
+        console.error('Failed to delete application:', error);
+        showToast(`Failed to delete application: ${error.message || 'Please try again.'}`, 'error');
+        deleteBtn.disabled = false;
+        deleteBtn.classList.remove('is-deleting');
     }
 }
 

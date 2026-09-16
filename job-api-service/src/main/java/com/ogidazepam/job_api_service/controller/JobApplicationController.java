@@ -14,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/applications")
 public class JobApplicationController {
@@ -54,7 +56,13 @@ public class JobApplicationController {
     }
 
     @GetMapping("/stats")
-    public ResponseEntity<java.util.Map<ApplicationStatus, Long>> getApplicationStats(){
+    public ResponseEntity<Map<ApplicationStatus, Long>> getApplicationStats(){
         return ResponseEntity.ok(jobApplicationService.getApplicationStats());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> removeApplication(@PathVariable Long id){
+        jobApplicationService.removeApplication(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -75,6 +75,15 @@ public class JobApplicationService {
         jobApplication.setNotes(request.notes());
     }
 
+    @Transactional
+    public void removeApplication(Long id){
+        JobApplication jobApplication = jobApplicationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("JobApplication by id " + id + " was not found"));
+
+        jobApplicationRepository.delete(jobApplication);
+        analyzedOfferRepository.changeStatus(ApplicationStatus.ACTIVE, jobApplication.getOfferUrl());
+    }
+
     private JobApplication mapToJobApplication(ApplyRequest applyRequest){
         return JobApplication.builder()
                 .offerUrl(applyRequest.offerUrl())
