@@ -73,7 +73,7 @@ public class KafkaConsumerListener {
         if(event.type() == JobOfferEvent.EventType.OFFER){
             List<JobOffer> taskBuffer = buffers.computeIfAbsent(taskId, k -> Collections.synchronizedList(new ArrayList<>()));
 
-            OfferResult cachedOfferResult = offerResultCacheService.getFromCache(event.cvHash(), event.offer().url());
+            OfferResult cachedOfferResult = offerResultCacheService.getFromCache(event.customerId(), event.cvHash(), event.offer().url());
             if (cachedOfferResult != null){
                 log.info("Found cached analysis for offer [{}] (score: {}/100, task: {}). Emitting to Kafka.",
                         cachedOfferResult.jobTitle(), cachedOfferResult.score(), taskId);

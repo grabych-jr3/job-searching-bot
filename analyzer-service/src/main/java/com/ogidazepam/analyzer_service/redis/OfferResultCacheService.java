@@ -17,8 +17,8 @@ public class OfferResultCacheService {
         this.offerResultRedisTemplate = offerResultRedisTemplate;
     }
 
-    public OfferResult getFromCache(String cvHash, String offerUrl){
-        String key = buildKey(cvHash, offerUrl);
+    public OfferResult getFromCache(Long customerId, String cvHash, String offerUrl){
+        String key = buildKey(customerId, cvHash, offerUrl);
         try {
             OfferResult result = offerResultRedisTemplate.opsForValue().get(key);
             if (result != null) {
@@ -31,8 +31,8 @@ public class OfferResultCacheService {
         }
     }
 
-    public void cacheOfferResult(String cvHash, String offerUrl, OfferResult result){
-        String key = buildKey(cvHash, offerUrl);
+    public void cacheOfferResult(Long customerId, String cvHash, String offerUrl, OfferResult result){
+        String key = buildKey(customerId, cvHash, offerUrl);
         try {
             offerResultRedisTemplate.opsForValue().set(key, result, Duration.ofDays(7));
             log.debug("Cached OfferResult in Redis: score={}, TTL=7d", result.score());
@@ -41,7 +41,7 @@ public class OfferResultCacheService {
         }
     }
 
-    private String buildKey(String cvHash, String offerUrl){
-        return "analyzed_offer:" + cvHash + ":" + offerUrl;
+    private String buildKey(Long customerId, String cvHash, String offerUrl){
+        return "analyzed_offer:" + customerId + ":" + cvHash + ":" + offerUrl;
     }
 }

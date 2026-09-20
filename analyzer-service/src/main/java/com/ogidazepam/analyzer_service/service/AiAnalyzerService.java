@@ -71,7 +71,7 @@ public class AiAnalyzerService {
                         AnalyzedOfferEvent.offerResult(event.taskId(), event.cvHash(), event.customerId(), offer, true)
                 );
 
-                offerResultCacheService.cacheOfferResult(event.cvHash(), offer.url(), offer);
+                offerResultCacheService.cacheOfferResult(event.customerId(), event.cvHash(), offer.url(), offer);
             });
         }
     }
