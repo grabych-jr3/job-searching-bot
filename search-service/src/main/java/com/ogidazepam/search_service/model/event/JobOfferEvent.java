@@ -5,6 +5,7 @@ import com.ogidazepam.search_service.model.JobOffer;
 public record JobOfferEvent(
         String taskId,
         String cvHash,
+        Long customerId,
         JobOffer offer,
         EventType type
 ) {
@@ -13,11 +14,11 @@ public record JobOfferEvent(
         SEARCH_FINISHED
     }
 
-    public static JobOfferEvent offer(String taskId, String cvHash, JobOffer offer){
-        return new JobOfferEvent(taskId, cvHash, offer, EventType.OFFER);
+    public static JobOfferEvent offer(String taskId, String cvHash, Long customerId, JobOffer offer){
+        return new JobOfferEvent(taskId, cvHash, customerId, offer, EventType.OFFER);
     }
 
-    public static JobOfferEvent finishedOffer(String taskId, String cvHash){
-        return new JobOfferEvent(taskId, cvHash, null, EventType.SEARCH_FINISHED);
+    public static JobOfferEvent finishedOffer(String taskId, String cvHash, Long customerId){
+        return new JobOfferEvent(taskId, cvHash, customerId, null, EventType.SEARCH_FINISHED);
     }
 }

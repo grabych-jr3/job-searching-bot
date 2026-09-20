@@ -77,7 +77,7 @@ public class KafkaConsumerListener {
             if (cachedOfferResult != null){
                 log.info("Found cached analysis for offer [{}] (score: {}/100, task: {}). Emitting to Kafka.",
                         cachedOfferResult.jobTitle(), cachedOfferResult.score(), taskId);
-                kafkaProducerService.sendToKafka(KafkaConfig.MAIN_TOPIC, event.taskId(), AnalyzedOfferEvent.offerResult(taskId, event.cvHash(), cachedOfferResult, false));
+                kafkaProducerService.sendToKafka(KafkaConfig.MAIN_TOPIC, event.taskId(), AnalyzedOfferEvent.offerResult(taskId, event.cvHash(), event.customerId(), cachedOfferResult, false));
             } else {
                 taskBuffer.add(event.offer());
                 log.debug("Buffered offer [{}] for task [{}]. Current buffer: {}/{}",
@@ -92,7 +92,7 @@ public class KafkaConsumerListener {
             buffers.remove(taskId);
             if (!failedTasks.contains(taskId)){
                 log.info("Completed all offer evaluations for task [{}]. Emitting ANALYSIS_FINISHED event.", taskId);
-                kafkaProducerService.sendToKafka(KafkaConfig.MAIN_TOPIC, event.taskId(), AnalyzedOfferEvent.finished(taskId));
+                kafkaProducerService.sendToKafka(KafkaConfig.MAIN_TOPIC, event.taskId(), AnalyzedOfferEvent.finished(taskId, event.customerId()));
             }
             cleanup(taskId);
         }
@@ -116,7 +116,7 @@ public class KafkaConsumerListener {
                 kafkaProducerService.sendToKafka(
                         KafkaConfig.MAIN_TOPIC,
                         event.taskId(),
-                        AnalyzedOfferEvent.failed(event.taskId(), e.getMessage())
+                        AnalyzedOfferEvent.failed(event.taskId(), event.customerId(), e.getMessage())
                 );
             } catch (AiAnalysisException e){
                 log.error("Failed to analyze batch of {} offers for task [{}]: {}", batchToSend.size(), event.taskId(), e.getMessage(), e);

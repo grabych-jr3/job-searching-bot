@@ -32,6 +32,9 @@ public class AnalyzedOffer {
     private Long id;
 
     @Column(nullable = false)
+    private Long customerId;
+
+    @Column(nullable = false)
     private String offerUrl;
 
     @Column(nullable = false)

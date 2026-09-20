@@ -10,12 +10,21 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface AnalyzedOfferRepository extends JpaRepository<AnalyzedOffer, Long> {
 
+    Page<AnalyzedOffer> findAllByCustomerId(Long customerId, Pageable pageable);
+
+    void deleteAllByCustomerId(Long id);
+
+    Optional<AnalyzedOffer> findByIdAndCustomerId(Long id, Long customerId);
+
     @Query("""
         SELECT a FROM AnalyzedOffer a
-        WHERE (:minScore IS NULL OR a.score >= :minScore)
+        WHERE a.customerId = :customerId
+          AND (:minScore IS NULL OR a.score >= :minScore)
           AND (:maxScore IS NULL OR a.score <= :maxScore)
           AND (
             :search IS NULL OR :search = ''
@@ -28,16 +37,18 @@ public interface AnalyzedOfferRepository extends JpaRepository<AnalyzedOffer, Lo
             @Param("minScore") Integer minScore,
             @Param("maxScore") Integer maxScore,
             @Param("search") String search,
+            @Param("customerId") Long customerId,
             Pageable pageable
     );
 
     @Modifying
     @Query(value = """
-        INSERT INTO analyzed_offer (offer_url, cv_hash, job_title, company_name, reason, score, status, analyzed_at)
-        VALUES (:offerUrl, :cvHash, :jobTitle, :companyName, :reason, :score, :status, NOW())
+        INSERT INTO analyzed_offer (customer_id, offer_url, cv_hash, job_title, company_name, reason, score, status, analyzed_at)
+        VALUES (:customerId, :offerUrl, :cvHash, :jobTitle, :companyName, :reason, :score, :status, NOW())
         ON CONFLICT (cv_hash, offer_url) DO NOTHING
     """, nativeQuery = true)
     void insertIfNotExists(
+            @Param("customerId") Long customerId,
             @Param("offerUrl") String offerUrl,
             @Param("cvHash") String cvHash,
             @Param("jobTitle") String jobTitle,
@@ -49,10 +60,11 @@ public interface AnalyzedOfferRepository extends JpaRepository<AnalyzedOffer, Lo
 
     @Modifying
     @Query("""
-    UPDATE AnalyzedOffer SET status = :status WHERE offerUrl = :offerUrl
+    UPDATE AnalyzedOffer SET status = :status WHERE offerUrl = :offerUrl AND customerId = :customerId
     """)
     void changeStatus(
             @Param("status") ApplicationStatus status,
-            @Param("offerUrl") String offerUrl
+            @Param("offerUrl") String offerUrl,
+            @Param("customerId") Long customerId
     );
 }

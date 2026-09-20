@@ -7,6 +7,7 @@ import lombok.Builder;
 public record CreatedTaskEvent(
         String taskId,
         String cvHash,
+        Long customerId,
         AnalyzeRequest analyzeRequest
 ) {
 }

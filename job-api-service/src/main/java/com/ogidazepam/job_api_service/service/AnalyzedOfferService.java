@@ -33,16 +33,16 @@ public class AnalyzedOfferService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AnalyzedOffer> getCustomerHistory(Integer minScore, Integer maxScore, String search, Pageable pageable){
+    public Page<AnalyzedOffer> getCustomerHistory(Long customerId, Integer minScore, Integer maxScore, String search, Pageable pageable){
         log.debug("Querying history for minScore={}, maxScore={}, search=[{}], page={}, size={}",
                 minScore, maxScore, search, pageable.getPageNumber(), pageable.getPageSize());
 
         if (minScore != null || maxScore != null || (search != null && !search.isBlank())) {
             return analyzedOfferRepository.findWithFilters(
-                    minScore, maxScore, search != null ? search.trim() : null, pageable
+                    minScore, maxScore, search != null ? search.trim() : null, customerId, pageable
             );
         }
-        return analyzedOfferRepository.findAll(pageable);
+        return analyzedOfferRepository.findAllByCustomerId(customerId, pageable);
     }
 
     @Transactional
@@ -55,6 +55,7 @@ public class AnalyzedOfferService {
 
         if (jobApplicationOptional.isPresent()){
             analyzedOfferRepository.insertIfNotExists(
+                    offerEvent.customerId(),
                     offerResult.url(),
                     offerEvent.cvHash(),
                     offerResult.jobTitle(),
@@ -65,6 +66,7 @@ public class AnalyzedOfferService {
             );
         } else {
             analyzedOfferRepository.insertIfNotExists(
+                    offerEvent.customerId(),
                     offerResult.url(),
                     offerEvent.cvHash(),
                     offerResult.jobTitle(),
@@ -77,25 +79,25 @@ public class AnalyzedOfferService {
     }
 
     @Transactional
-    public void deleteAll(){
-        analyzedOfferRepository.deleteAll();
+    public void deleteAll(Long customerId){
+        analyzedOfferRepository.deleteAllByCustomerId(customerId);
         log.info("Deleted all analyzed offer from DB");
-        analyzedOfferCacheService.deleteAllAnalyzedOffersFromCache();
+        analyzedOfferCacheService.deleteAllAnalyzedOffersFromCache(customerId);
     }
 
     @Transactional
-    public void deleteOffer(Long id){
-        AnalyzedOffer analyzedOffer = analyzedOfferRepository.findById(id)
+    public void deleteOffer(Long customerId, Long id){
+        AnalyzedOffer analyzedOffer = analyzedOfferRepository.findByIdAndCustomerId(id, customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Offer with id " + id + " not found"));
 
         analyzedOfferRepository.delete(analyzedOffer);
         log.info("Deleted analyzed offer from DB: id={}, score={}, title=[{}], companyName=[{}], url=[{}]",
                 analyzedOffer.getId(), analyzedOffer.getScore(), analyzedOffer.getJobTitle(), analyzedOffer.getCompanyName(), analyzedOffer.getOfferUrl());
-        analyzedOfferCacheService.deleteOfferFromCache(analyzedOffer.getCvHash(), analyzedOffer.getOfferUrl());
+        analyzedOfferCacheService.deleteOfferFromCache(customerId, analyzedOffer.getCvHash(), analyzedOffer.getOfferUrl());
     }
 
     @Transactional
-    public void markAsApplied(String offerUrl){
-        analyzedOfferRepository.changeStatus(ApplicationStatus.APPLIED, offerUrl);
+    public void markAsApplied(Long customerId, String offerUrl){
+        analyzedOfferRepository.changeStatus(ApplicationStatus.APPLIED, offerUrl, customerId);
     }
 }

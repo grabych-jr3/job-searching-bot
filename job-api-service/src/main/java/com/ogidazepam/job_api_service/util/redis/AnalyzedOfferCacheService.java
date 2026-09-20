@@ -20,9 +20,9 @@ public class AnalyzedOfferCacheService {
         this.analyzedOfferRedisTemplate = analyzedOfferRedisTemplate;
     }
 
-    public void deleteAllAnalyzedOffersFromCache(){
+    public void deleteAllAnalyzedOffersFromCache(Long customerId){
         ScanOptions scanOptions = ScanOptions.scanOptions()
-                .match("analyzed_offer:*")
+                .match("analyzed_offer:" + customerId + ":*")
                 .count(1000)
                 .build();
 
@@ -47,8 +47,8 @@ public class AnalyzedOfferCacheService {
         }
     }
 
-    public void deleteOfferFromCache(String cvHash, String url){
-        String key = buildKey(cvHash, url);
+    public void deleteOfferFromCache(Long customerId, String cvHash, String url){
+        String key = buildKey(customerId, cvHash, url);
         try {
             analyzedOfferRedisTemplate.delete(key);
             log.debug("Deleted AnalyzedOffer from Redis: key=[{}]", key);
@@ -58,7 +58,7 @@ public class AnalyzedOfferCacheService {
 
     }
 
-    private String buildKey(String cvHash, String url){
-        return "analyzed_offer:" + cvHash + ":" + url;
+    private String buildKey(Long customerId, String cvHash, String url){
+        return "analyzed_offer:" + customerId + ":" + cvHash + ":" + url;
     }
 }

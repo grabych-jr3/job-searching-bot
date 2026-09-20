@@ -68,7 +68,7 @@ public class AiAnalyzerService {
                 kafkaProducerService.sendToKafka(
                         KafkaConfig.MAIN_TOPIC,
                         event.taskId(),
-                        AnalyzedOfferEvent.offerResult(event.taskId(), event.cvHash(), offer, true)
+                        AnalyzedOfferEvent.offerResult(event.taskId(), event.cvHash(), event.customerId(), offer, true)
                 );
 
                 offerResultCacheService.cacheOfferResult(event.cvHash(), offer.url(), offer);

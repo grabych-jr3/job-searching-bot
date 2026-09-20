@@ -31,57 +31,58 @@ public class JobApplicationService {
     }
 
     @Transactional
-    public void applyForVacancy(ApplyRequest applyRequest){
+    public void applyForVacancy(Long customerId, ApplyRequest applyRequest){
         JobApplication jobApplication = mapToJobApplication(applyRequest);
+        jobApplication.setCustomerId(customerId);
         jobApplication.setStatus(ApplicationStatus.APPLIED);
 
         jobApplicationRepository.save(jobApplication);
     }
 
     @Transactional
-    public void changeApplicationStatus(Long id, ApplicationStatus status){
-        JobApplication jobApplication = jobApplicationRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("JobApplication by id " + id + " was not found"));
+    public void changeApplicationStatus(Long customerId, Long id, ApplicationStatus status){
+        JobApplication jobApplication = jobApplicationRepository.findByIdAndCustomerId(id, customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("JobApplication by id " + id + " and customerId " + customerId + " was not found"));
 
         jobApplication.setStatus(status);
-        analyzedOfferRepository.changeStatus(status, jobApplication.getOfferUrl());
+        analyzedOfferRepository.changeStatus(status, jobApplication.getOfferUrl(), customerId);
     }
 
     @Transactional(readOnly = true)
-    public Page<ApplyResponse> getApplication(ApplicationStatus status, Pageable pageable){
+    public Page<ApplyResponse> getApplication(Long customerId, ApplicationStatus status, Pageable pageable){
         Page<JobApplication> jobApplications = status != null
-                ? jobApplicationRepository.findByStatus(status, pageable)
-                : jobApplicationRepository.findAll(pageable);
+                ? jobApplicationRepository.findByCustomerIdAndStatus(customerId, status, pageable)
+                : jobApplicationRepository.findAllByCustomerId(customerId, pageable);
 
         return jobApplications.map(this::mapToApplyResponse);
     }
 
     @Transactional(readOnly = true)
-    public Map<ApplicationStatus, Long> getApplicationStats() {
+    public Map<ApplicationStatus, Long> getApplicationStats(Long customerId) {
         Map<ApplicationStatus, Long> stats = Arrays.stream(ApplicationStatus.values())
                 .collect(Collectors.toMap(s -> s, s -> 0L, (a, b) -> a, () -> new EnumMap<>(ApplicationStatus.class)));
 
-        jobApplicationRepository.countApplicationsByStatus()
+        jobApplicationRepository.countApplicationsByStatus(customerId)
                 .forEach(res -> stats.put(res.getStatus(), res.getCount()));
 
         return stats;
     }
 
     @Transactional
-    public void addNotesToApplication(Long id, ApplicationNotesRequest request) {
-        JobApplication jobApplication = jobApplicationRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("JobApplication by id " + id + " was not found"));
+    public void addNotesToApplication(Long customerId, Long id, ApplicationNotesRequest request) {
+        JobApplication jobApplication = jobApplicationRepository.findByIdAndCustomerId(id, customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("JobApplication by id " + id + " and customerId " + customerId + " was not found"));
 
         jobApplication.setNotes(request.notes());
     }
 
     @Transactional
-    public void removeApplication(Long id){
-        JobApplication jobApplication = jobApplicationRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("JobApplication by id " + id + " was not found"));
+    public void removeApplication(Long customerId, Long id){
+        JobApplication jobApplication = jobApplicationRepository.findByIdAndCustomerId(id, customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("JobApplication by id " + id + " and customerId " + customerId + " was not found"));
 
         jobApplicationRepository.delete(jobApplication);
-        analyzedOfferRepository.changeStatus(ApplicationStatus.ACTIVE, jobApplication.getOfferUrl());
+        analyzedOfferRepository.changeStatus(ApplicationStatus.ACTIVE, jobApplication.getOfferUrl(), customerId);
     }
 
     private JobApplication mapToJobApplication(ApplyRequest applyRequest){

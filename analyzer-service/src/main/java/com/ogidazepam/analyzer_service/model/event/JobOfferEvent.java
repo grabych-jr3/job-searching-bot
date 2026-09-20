@@ -5,19 +5,12 @@ import com.ogidazepam.analyzer_service.model.offer.JobOffer;
 public record JobOfferEvent(
         String taskId,
         String cvHash,
+        Long customerId,
         JobOffer offer,
         EventType type
 ) {
     public enum EventType {
         OFFER,
         SEARCH_FINISHED
-    }
-
-    public static JobOfferEvent offer(String taskId, Long customerId, String cvHash, JobOffer offer){
-        return new JobOfferEvent(taskId, cvHash, offer, EventType.OFFER);
-    }
-
-    public static JobOfferEvent finishedOffer(String taskId, Long customerId){
-        return new JobOfferEvent(taskId, null, null, EventType.SEARCH_FINISHED);
     }
 }

@@ -1,5 +1,6 @@
 package com.ogidazepam.job_api_service.controller;
 
+import com.ogidazepam.job_api_service.auth.util.CustomUserDetails;
 import com.ogidazepam.job_api_service.config.KafkaConfig;
 import com.ogidazepam.job_api_service.model.event.CreatedTaskEvent;
 import com.ogidazepam.job_api_service.model.request.AnalyzeRequest;
@@ -11,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,6 +40,7 @@ public class JobController {
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     public ResponseEntity<CreatedTaskEvent> analyzeOffers(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid AnalyzeRequest analyzeRequest,
             @RequestPart("file")MultipartFile file
             ) throws IOException {
@@ -45,7 +48,7 @@ public class JobController {
                 analyzeRequest.technology(), analyzeRequest.experience(), analyzeRequest.workMode(), file.getSize());
 
         fileValidator.validatePdf(file);
-        CreatedTaskEvent event = taskService.createTaskEvent(analyzeRequest, file.getBytes());
+        CreatedTaskEvent event = taskService.createTaskEvent(userDetails.getCustomerId(), analyzeRequest, file.getBytes());
 
         cvBytesCacheService.cacheCvBytes(event.taskId(), file.getBytes());
         kafkaProducerService.sendToKafka(KafkaConfig.MAIN_TOPIC, event.taskId(), event);
