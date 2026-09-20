@@ -53,7 +53,9 @@ function showToast(message, type = 'success') {
 
 async function fetchAppliedApplications() {
     try {
-        const res = await fetch(`${API_BASE_URL}/api/applications?size=1000`);
+        const res = await fetch(`${API_BASE_URL}/api/applications?size=1000`, {
+            credentials: 'include'
+        });
         if (!res.ok) return;
         const data = await res.json();
         const items = Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
@@ -109,12 +111,22 @@ async function markOfferAsApplied(safeUrl, safeTitle, safeCompanyName) {
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({
                 offerUrl: safeUrl,
                 jobTitle: safeTitle,
                 companyName: safeCompanyName
             })
         });
+
+        if (response.status === 401) {
+            if (window.AuthState?.showAuthModal) {
+                window.AuthState.showAuthModal('track applications');
+            } else {
+                showToast('Please sign in to track applications.', 'error');
+            }
+            throw new Error('Authentication required');
+        }
 
         if (!response.ok) {
             let errorMsg = `HTTP ${response.status}`;
@@ -134,7 +146,8 @@ async function markOfferAsApplied(safeUrl, safeTitle, safeCompanyName) {
 
         try {
             await fetch(`${API_BASE_URL}/api/history/mark-as-applied?offerUrl=${encodeURIComponent(safeUrl)}`, {
-                method: 'PATCH'
+                method: 'PATCH',
+                credentials: 'include'
             });
         } catch {
             // Non-critical if backend synchronizes automatically
@@ -784,7 +797,7 @@ function openTaskStream(taskId) {
         </div>
     `;
 
-    taskStream = new EventSource(streamUrl);
+    taskStream = new EventSource(streamUrl, { withCredentials: true });
 
     taskStream.onopen = () => {
         showStatus('Connected! Processing vacancies...', 'loading');
@@ -948,8 +961,18 @@ form.addEventListener('submit', async (event) => {
 
         const response = await fetch(requestUrl.toString(), {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'include'
         });
+
+        if (response.status === 401) {
+            if (window.AuthState?.showAuthModal) {
+                window.AuthState.showAuthModal('run CV analyses');
+            } else {
+                showStatus('Authentication required. Please sign in.', 'error');
+            }
+            throw new Error('Please sign in to analyze resumes.');
+        }
 
         if (!response.ok) {
             let errorText = await response.text();

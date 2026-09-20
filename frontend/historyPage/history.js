@@ -93,8 +93,26 @@ async function loadHistory(page = 0) {
         }
 
         const response = await fetch(url.toString(), {
-            method: 'GET'
+            method: 'GET',
+            credentials: 'include'
         });
+
+        if (response.status === 401) {
+            if (window.AuthState?.showAuthModal) {
+                window.AuthState.showAuthModal('view analysis history');
+            }
+            resultsContainer.innerHTML = `
+                <div class="empty-state">
+                    <p style="font-weight: 700; color: var(--text);">Sign In Required</p>
+                    <p style="color: var(--muted); margin: 6px 0 16px;">Please sign in to your account to view your analyzed vacancy history.</p>
+                    <a href="../authPage/login.html?redirect=${encodeURIComponent(window.location.href)}" class="empty-action-btn">
+                        Sign In Now
+                    </a>
+                </div>
+            `;
+            if (paginationNav) paginationNav.style.display = 'none';
+            return;
+        }
 
         if (!response.ok) {
             throw new Error(`Failed to load history (status ${response.status})`);
@@ -176,7 +194,9 @@ const appliedApplicationsMap = new Map(); // offerUrl -> status
 
 async function fetchAppliedApplications() {
     try {
-        const res = await fetch(`${API_BASE_URL}/api/applications?size=1000`);
+        const res = await fetch(`${API_BASE_URL}/api/applications?size=1000`, {
+            credentials: 'include'
+        });
         if (!res.ok) return;
         const data = await res.json();
         const items = Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
@@ -232,12 +252,22 @@ async function markOfferAsApplied(safeUrl, safeTitle, safeCompanyName) {
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({
                 offerUrl: safeUrl,
                 jobTitle: safeTitle,
                 companyName: safeCompanyName
             })
         });
+
+        if (response.status === 401) {
+            if (window.AuthState?.showAuthModal) {
+                window.AuthState.showAuthModal('track applications');
+            } else {
+                showToast('Please sign in to track applications.', 'error');
+            }
+            throw new Error('Authentication required');
+        }
 
         if (!response.ok) {
             let errorMsg = `HTTP ${response.status}`;
@@ -257,7 +287,8 @@ async function markOfferAsApplied(safeUrl, safeTitle, safeCompanyName) {
 
         try {
             await fetch(`${API_BASE_URL}/api/history/mark-as-applied?offerUrl=${encodeURIComponent(safeUrl)}`, {
-                method: 'PATCH'
+                method: 'PATCH',
+                credentials: 'include'
             });
         } catch {
             // Non-critical if handled by applications service
@@ -594,7 +625,8 @@ async function deleteOffer(id) {
 
     try {
         const response = await fetch(`${API_BASE_URL}/api/history/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'include'
         });
 
         if (!response.ok) {
@@ -620,7 +652,8 @@ async function clearHistory() {
 
     try {
         const response = await fetch(`${API_BASE_URL}/api/history`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'include'
         });
 
         if (!response.ok) {

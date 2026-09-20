@@ -91,19 +91,29 @@ body {
     background: var(--primary-light);
 }
 
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
 .nav-actions .analyzer-nav-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     text-decoration: none;
     background: var(--primary);
     color: #fff;
     font-weight: 700;
     font-size: 0.88rem;
-    padding: 9px 16px;
+    padding: 0 16px;
+    height: 38px;
     border-radius: 999px;
     transition: all 0.2s ease;
     box-shadow: 0 4px 12px rgba(61, 90, 254, 0.25);
+    white-space: nowrap;
 }
 
 .nav-actions .analyzer-nav-btn:hover {

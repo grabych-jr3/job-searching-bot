@@ -108,8 +108,26 @@ async function loadApplications(page = 0) {
         }
 
         const response = await fetch(url.toString(), {
-            method: 'GET'
+            method: 'GET',
+            credentials: 'include'
         });
+
+        if (response.status === 401) {
+            if (window.AuthState?.showAuthModal) {
+                window.AuthState.showAuthModal('view job applications');
+            }
+            resultsContainer.innerHTML = `
+                <div class="empty-state">
+                    <p style="font-weight: 700; color: var(--text);">Sign In Required</p>
+                    <p style="color: var(--muted); margin: 6px 0 16px;">Please sign in to your account to view and track your job applications.</p>
+                    <a href="../authPage/login.html?redirect=${encodeURIComponent(window.location.href)}" class="empty-action-btn">
+                        Sign In Now
+                    </a>
+                </div>
+            `;
+            if (paginationNav) paginationNav.style.display = 'none';
+            return;
+        }
 
         if (!response.ok) {
             throw new Error(`Failed to load applications (status ${response.status})`);
@@ -168,7 +186,9 @@ async function loadApplications(page = 0) {
 // Fetch counts for pipeline summary strip
 async function updateStageCounters() {
     try {
-        const res = await fetch(`${API_BASE_URL}/api/applications/stats`);
+        const res = await fetch(`${API_BASE_URL}/api/applications/stats`, {
+            credentials: 'include'
+        });
         if (!res.ok) return;
 
         const stats = await res.json();
@@ -463,8 +483,14 @@ async function changeApplicationStatus(id, newStatus, selectEl, cardEl, badgeEl,
         url.searchParams.set('status', newStatus);
 
         const response = await fetch(url.toString(), {
-            method: 'PATCH'
+            method: 'PATCH',
+            credentials: 'include'
         });
+
+        if (response.status === 401) {
+            if (window.AuthState?.showAuthModal) window.AuthState.showAuthModal('update application status');
+            throw new Error('Authentication required');
+        }
 
         if (!response.ok) {
             let errorMsg = `HTTP Error ${response.status}`;
@@ -521,8 +547,14 @@ async function saveApplicationNotes(id, newNotes, cardEl, appObj, notesView, edi
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({ notes: newNotes })
         });
+
+        if (response.status === 401) {
+            if (window.AuthState?.showAuthModal) window.AuthState.showAuthModal('save application notes');
+            throw new Error('Authentication required');
+        }
 
         if (!response.ok) {
             let errorMsg = `HTTP Error ${response.status}`;
@@ -583,8 +615,14 @@ async function deleteApplication(id, deleteBtn, cardEl, appObj) {
 
     try {
         const response = await fetch(`${API_BASE_URL}/api/applications/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'include'
         });
+
+        if (response.status === 401) {
+            if (window.AuthState?.showAuthModal) window.AuthState.showAuthModal('delete applications');
+            throw new Error('Authentication required');
+        }
 
         if (!response.ok && response.status !== 204) {
             let errorMsg = `HTTP Error ${response.status}`;
@@ -869,8 +907,17 @@ async function handleAddApplicationSubmit(e) {
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify(payload)
         });
+
+        if (response.status === 401) {
+            closeAddModal();
+            if (window.AuthState?.showAuthModal) {
+                window.AuthState.showAuthModal('add external applications');
+            }
+            throw new Error('Authentication required');
+        }
 
         if (!response.ok) {
             let errorMsg = `Server returned status ${response.status}`;

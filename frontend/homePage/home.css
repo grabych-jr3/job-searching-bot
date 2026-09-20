@@ -98,36 +98,42 @@ body {
 .nav-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    flex-shrink: 0;
 }
 
 .nav-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    padding: 8px 16px;
-    border-radius: 10px;
+    padding: 0 16px;
+    height: 38px;
+    border-radius: 999px;
     font-size: 0.88rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     text-decoration: none;
     transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .primary-nav-btn {
     background: var(--primary);
     color: #fff;
     border: none;
+    box-shadow: 0 4px 12px rgba(61, 90, 254, 0.25);
 }
 
 .primary-nav-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
 }
 
 .primary-nav-btn:hover {
     background: var(--primary-dark);
     transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(61, 90, 254, 0.35);
 }
 
 /* Home Layout */
