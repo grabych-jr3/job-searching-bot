@@ -1,5 +1,6 @@
 package com.ogidazepam.job_api_service.util;
 
+import com.ogidazepam.job_api_service.exceptions.RateLimitExceededException;
 import com.ogidazepam.job_api_service.exceptions.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +46,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ExceptionModel> handleDataIntegrity(DataIntegrityViolationException e,
-                                                               HttpServletRequest request){
+                                                              HttpServletRequest request){
         log.warn("Data integrity conflict at path [{}]: {}", request.getRequestURI(), e.getMessage());
         HttpStatus status = HttpStatus.CONFLICT;
         return ResponseEntity.status(status)
@@ -63,7 +64,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(MissingServletRequestPartException.class)
     public ResponseEntity<ExceptionModel> handleMissingPart(MissingServletRequestPartException e,
-                                                             HttpServletRequest request){
+                                                            HttpServletRequest request){
         log.warn("Missing request part at path [{}]: {}", request.getRequestURI(), e.getMessage());
         HttpStatus status = HttpStatus.BAD_REQUEST;
         return ResponseEntity.status(status)
@@ -110,5 +111,14 @@ public class ApiExceptionHandler {
         HttpStatus status = HttpStatus.NOT_FOUND;
         return ResponseEntity.status(status)
                 .body(ExceptionModel.of(e.getReason(), status, request.getRequestURI()));
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ExceptionModel> handleRateLimitException(RateLimitExceededException e,
+                                                                   HttpServletRequest request){
+        HttpStatus status = HttpStatus.TOO_MANY_REQUESTS;
+        return ResponseEntity.status(status)
+                .header("Retry-After", String.valueOf(e.getRetryAfterSeconds()))
+                .body(ExceptionModel.of(e.getMessage(), status, request.getRequestURI()));
     }
 }
