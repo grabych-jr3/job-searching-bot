@@ -2,6 +2,7 @@ package com.ogidazepam.job_api_service.auth.util;
 
 import com.ogidazepam.job_api_service.auth.model.entity.Customer;
 import com.ogidazepam.job_api_service.auth.model.enums.CustomerRole;
+import com.ogidazepam.job_api_service.auth.model.enums.SubscriptionTier;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,4 +28,6 @@ public record CustomUserDetails(Customer customer) implements UserDetails {
     }
 
     public Long getCustomerId() { return customer.getId(); }
+
+    public SubscriptionTier getSubscriptionTier() { return customer.getSubscriptionTier(); }
 }
