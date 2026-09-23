@@ -4,6 +4,7 @@ import com.ogidazepam.job_api_service.auth.model.dto.LoginRequest;
 import com.ogidazepam.job_api_service.auth.model.dto.SignUpRequest;
 import com.ogidazepam.job_api_service.auth.model.entity.Customer;
 import com.ogidazepam.job_api_service.auth.model.enums.CustomerRole;
+import com.ogidazepam.job_api_service.auth.model.enums.SubscriptionTier;
 import com.ogidazepam.job_api_service.auth.repository.CustomerRepository;
 import com.ogidazepam.job_api_service.auth.util.CustomUserDetails;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +40,9 @@ public class CustomerService {
             log.warn("Registration rejected: email [{}] is already registered", dto.email());
             throw new DataIntegrityViolationException("This email was already registered");
         }
-        Customer savedCustomer = customerRepository.save(toCustomer(dto));
+        Customer customerToSave = toCustomer(dto);
+        customerToSave.setSubscriptionTier(SubscriptionTier.BASIC);
+        Customer savedCustomer = customerRepository.save(customerToSave);
         log.info("Customer registered successfully with id [{}] and email [{}]", savedCustomer.getId(), dto.email());
     }
 

@@ -36,6 +36,7 @@ public class Customer {
     private List<CustomerRole> roles;
 
     @Enumerated(value = EnumType.STRING)
+    @Column(nullable = false)
     private SubscriptionTier subscriptionTier = SubscriptionTier.BASIC;
 
     @CreationTimestamp
