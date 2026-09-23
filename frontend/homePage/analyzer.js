@@ -584,6 +584,24 @@ if (filePickerLabel) {
 function mapBackendException(rawError) {
     const errorStr = (rawError || '').toString().toLowerCase();
 
+    // 0. Rate Limit / Quota Exceeded (HTTP 429)
+    if (
+        errorStr.includes('quota') ||
+        errorStr.includes('rate limit') ||
+        errorStr.includes('429') ||
+        errorStr.includes('too many requests') ||
+        errorStr.includes('requests/day') ||
+        errorStr.includes('try again in') ||
+        errorStr.includes('exhausted')
+    ) {
+        return {
+            category: 'Quota Exceeded',
+            title: 'Rate Limit Exceeded',
+            message: rawError || 'You have exhausted your request quota. Please try again later.',
+            tips: []
+        };
+    }
+
     // 1. Password Protected PDF
     if (errorStr.includes('password') || errorStr.includes('encrypted')) {
         return {
@@ -723,60 +741,64 @@ function renderErrorState(rawErrorMessage) {
     msg.className = 'error-state-message';
     msg.textContent = errorDetails.message;
 
-    const detailsBox = document.createElement('div');
-    detailsBox.className = 'error-state-details';
-    
-    const detailsTitle = document.createElement('span');
-    detailsTitle.className = 'error-details-title';
-    detailsTitle.textContent = 'How to resolve this issue:';
-    detailsBox.appendChild(detailsTitle);
-
-    const tipsList = document.createElement('ul');
-    tipsList.className = 'error-state-tips';
-    errorDetails.tips.forEach(tip => {
-        const li = document.createElement('li');
-        li.textContent = tip;
-        tipsList.appendChild(li);
-    });
-    detailsBox.appendChild(tipsList);
-
-    const actionsGroup = document.createElement('div');
-    actionsGroup.className = 'error-actions-group';
-
-    const retryBtn = document.createElement('button');
-    retryBtn.type = 'button';
-    retryBtn.className = 'error-action-btn retry-btn';
-    retryBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="23 4 23 10 17 10"></polyline>
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-        </svg>
-        <span>Re-Upload & Retry</span>
-    `;
-    retryBtn.addEventListener('click', () => {
-        fileInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        fileInput.click();
-    });
-
-    const guideLink = document.createElement('a');
-    guideLink.href = 'home.html#guidelines';
-    guideLink.className = 'error-action-btn guide-btn';
-    guideLink.style.textDecoration = 'none';
-    guideLink.innerHTML = `
-        <span>View Resume Guidelines</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-            <polyline points="12 5 19 12 12 19"></polyline>
-        </svg>
-    `;
-
-    actionsGroup.appendChild(retryBtn);
-    actionsGroup.appendChild(guideLink);
-
     errorCard.appendChild(header);
     errorCard.appendChild(msg);
-    errorCard.appendChild(detailsBox);
-    errorCard.appendChild(actionsGroup);
+
+    // Only render troubleshooting tips and guideline actions if tips are provided
+    if (errorDetails.tips && errorDetails.tips.length > 0) {
+        const detailsBox = document.createElement('div');
+        detailsBox.className = 'error-state-details';
+        
+        const detailsTitle = document.createElement('span');
+        detailsTitle.className = 'error-details-title';
+        detailsTitle.textContent = 'How to resolve this issue:';
+        detailsBox.appendChild(detailsTitle);
+
+        const tipsList = document.createElement('ul');
+        tipsList.className = 'error-state-tips';
+        errorDetails.tips.forEach(tip => {
+            const li = document.createElement('li');
+            li.textContent = tip;
+            tipsList.appendChild(li);
+        });
+        detailsBox.appendChild(tipsList);
+
+        const actionsGroup = document.createElement('div');
+        actionsGroup.className = 'error-actions-group';
+
+        const retryBtn = document.createElement('button');
+        retryBtn.type = 'button';
+        retryBtn.className = 'error-action-btn retry-btn';
+        retryBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+            <span>Re-Upload & Retry</span>
+        `;
+        retryBtn.addEventListener('click', () => {
+            fileInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            fileInput.click();
+        });
+
+        const guideLink = document.createElement('a');
+        guideLink.href = 'home.html#guidelines';
+        guideLink.className = 'error-action-btn guide-btn';
+        guideLink.style.textDecoration = 'none';
+        guideLink.innerHTML = `
+            <span>View Resume Guidelines</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+        `;
+
+        actionsGroup.appendChild(retryBtn);
+        actionsGroup.appendChild(guideLink);
+
+        errorCard.appendChild(detailsBox);
+        errorCard.appendChild(actionsGroup);
+    }
 
     resultsContainer.appendChild(errorCard);
 }
@@ -987,6 +1009,16 @@ form.addEventListener('submit', async (event) => {
             } catch {
                 // errorText is already plain string
             }
+
+            if (response.status === 429) {
+                const rateLimitMsg = parsedMessage || 'You have exhausted your daily quota. Please try again later.';
+                showStatus(rateLimitMsg, 'error');
+                renderErrorState(rateLimitMsg);
+                submitBtn.disabled = false;
+                submitBtnText.textContent = 'Start AI Analysis';
+                return;
+            }
+
             throw new Error(parsedMessage || `Request failed with status ${response.status}`);
         }
 
